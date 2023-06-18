@@ -1,0 +1,56 @@
+# Make sure to check the documentation at https://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+    - rm -rf completions
+    - mkdir completions
+    - sh -c 'go run . --generate-completions "bash" >./completions/{{ .ProjectName }}.bash'
+    - sh -c 'go run . --generate-completions "zsh" >./completions/{{ .ProjectName }}.zsh'
+    - sh -c 'go run . --generate-completions "fish" >./completions/{{ .ProjectName }}.fish'
+changelog:
+  skip: true
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE-MIT
+      - completions/*
+    rlcp: true
+nfpms:
+  - vendor: pomdtr
+    homepage: https://github.com/pomdtr/{{ .ProjectName }}
+    maintainer: Achille Lacoin
+    description: Generate powerful UIs from simple scripts written in any language.
+    license: MIT
+    formats:
+      - apk
+      - deb
+      - rpm
+    contents:
+      - src: ./completions/{{ .ProjectName }}.bash
+        dst: /etc/bash_completion.d/{{ .ProjectName }}
+      - src: ./completions/{{ .ProjectName }}.fish
+        dst: /usr/share/fish/vendor_completions.d/{{ .ProjectName }}.fish
+      - src: ./completions/{{ .ProjectName }}.zsh
+        dst: /usr/share/zsh/site-functions/_{{ .ProjectName }}
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+brews:
+  - name: "{{ .ProjectName }}"
+    homepage: https://github.com/pomdtr/{{ .ProjectName }}
+    tap:
+      owner: pomdtr
+      name: homebrew-tap
+    install: |-
+      bin.install "{{ .ProjectName }}"
+      bash_completion.install "completions/{{ .ProjectName }}.bash"
+      zsh_completion.install "completions/{{ .ProjectName }}.zsh"
+      fish_completion.install "completions/{{ .ProjectName }}.fish"
