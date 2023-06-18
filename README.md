@@ -1,4 +1,4 @@
-# val - A Companion Cli for Val Town
+# val - A Companion Cli for val.town
 
 ## Installation
 
