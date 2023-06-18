@@ -4,9 +4,6 @@ before:
     - go mod tidy
     - rm -rf completions
     - mkdir completions
-    - sh -c 'go run . --generate-completions "bash" >./completions/{{ .ProjectName }}.bash'
-    - sh -c 'go run . --generate-completions "zsh" >./completions/{{ .ProjectName }}.zsh'
-    - sh -c 'go run . --generate-completions "fish" >./completions/{{ .ProjectName }}.fish'
 changelog:
   skip: true
 builds:
@@ -20,7 +17,6 @@ archives:
     files:
       - README.md
       - LICENSE-MIT
-      - completions/*
     rlcp: true
 nfpms:
   - vendor: pomdtr
@@ -51,6 +47,3 @@ brews:
       name: homebrew-tap
     install: |-
       bin.install "{{ .ProjectName }}"
-      bash_completion.install "completions/{{ .ProjectName }}.bash"
-      zsh_completion.install "completions/{{ .ProjectName }}.zsh"
-      fish_completion.install "completions/{{ .ProjectName }}.fish"
