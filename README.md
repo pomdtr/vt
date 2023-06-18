@@ -3,8 +3,18 @@
 ## Installation
 
 ```bash
+# macOS / Linux
+brew install pomdtr/tap/val
+
+# Windows
+scoop bucket add pomdtr https://github.com/pomdtr/scoop-bucket.git
+scoop install pomdtr/sunbeam
+
+# From source
 go install github.com/pomdtr/val@latest
 ```
+
+Or download the appropriate binary / package from the [releases page](https://github.com/pomdtr/val/releases/latest).
 
 ## Usage
 
