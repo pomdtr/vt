@@ -53,7 +53,17 @@ func Execute() error {
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			}
 
-			io.Copy(os.Stdout, resp.Body)
+			var res any
+			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+				return err
+			}
+
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(res); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
