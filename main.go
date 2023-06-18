@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 )
 
@@ -17,11 +18,29 @@ const (
 
 func Execute() error {
 	rootCmd := &cobra.Command{
-		Use:  "val <expression>",
-		Args: cobra.ExactArgs(1),
+		Use:  "val [expression]",
+		Args: cobra.MaximumNArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
+				return fmt.Errorf("expression required")
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var expression string
+			if len(args) > 0 {
+				expression = args[0]
+			} else {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				expression = string(b)
+			}
+
 			body, err := json.Marshal(map[string]string{
-				"code": args[0],
+				"code": expression,
 			})
 			if err != nil {
 				return err

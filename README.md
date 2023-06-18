@@ -12,4 +12,6 @@ go install github.com/pomdtr/val@latest
 export VALTOWN_TOKEN='<your token>' # or use the --token flag
 
 val '@me.helloWorld()'
+
+echo '1 + 1' | val
 ```
