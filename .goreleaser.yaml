@@ -2,8 +2,6 @@
 before:
   hooks:
     - go mod tidy
-    - rm -rf completions
-    - mkdir completions
 changelog:
   skip: true
 builds:
@@ -29,13 +27,6 @@ nfpms:
       - apk
       - deb
       - rpm
-    contents:
-      - src: ./completions/{{ .ProjectName }}.bash
-        dst: /etc/bash_completion.d/{{ .ProjectName }}
-      - src: ./completions/{{ .ProjectName }}.fish
-        dst: /usr/share/fish/vendor_completions.d/{{ .ProjectName }}.fish
-      - src: ./completions/{{ .ProjectName }}.zsh
-        dst: /usr/share/zsh/site-functions/_{{ .ProjectName }}
 checksum:
   name_template: "checksums.txt"
 snapshot:
