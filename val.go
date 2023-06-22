@@ -18,8 +18,9 @@ const (
 
 func Execute() error {
 	rootCmd := &cobra.Command{
-		Use:  "val [expression]",
-		Args: cobra.MaximumNArgs(1),
+		Use:          "val [expression]",
+		Args:         cobra.MaximumNArgs(1),
+		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
 				return fmt.Errorf("expression required")
@@ -46,12 +47,16 @@ func Execute() error {
 				return err
 			}
 
-			req, err := http.NewRequest(http.MethodPost, "https://api.val.town/v1/eval", bytes.NewReader(body))
+			token, err := cmd.Flags().GetString("token")
 			if err != nil {
 				return err
 			}
 
-			token, err := cmd.Flags().GetString("token")
+			if token == "" {
+				token = os.Getenv(TOKEN_ENV)
+			}
+
+			req, err := http.NewRequest(http.MethodPost, "https://api.val.town/v1/eval", bytes.NewReader(body))
 			if err != nil {
 				return err
 			}
@@ -66,20 +71,26 @@ func Execute() error {
 				return err
 			}
 			defer resp.Body.Close()
+			res, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
 
 			if resp.StatusCode != http.StatusOK {
 				io.Copy(os.Stderr, resp.Body)
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			}
 
-			var res any
-			if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-				return err
+			var payload any
+			if err := json.Unmarshal(res, &payload); err != nil {
+				// not json
+				os.Stdout.Write(res)
+				return nil
 			}
 
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "  ")
-			if err := encoder.Encode(res); err != nil {
+			if err := encoder.Encode(payload); err != nil {
 				return err
 			}
 
@@ -87,7 +98,7 @@ func Execute() error {
 		},
 	}
 
-	rootCmd.PersistentFlags().StringP("token", "t", os.Getenv(TOKEN_ENV), "token to use for authentication")
+	rootCmd.PersistentFlags().StringP("token", "t", "", "token to use for authentication")
 	return rootCmd.Execute()
 }
 
