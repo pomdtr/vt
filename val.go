@@ -40,7 +40,7 @@ func Execute() error {
 				expression = string(b)
 			}
 
-			body, err := json.Marshal(map[string]string{
+			payload, err := json.Marshal(map[string]string{
 				"code": expression,
 			})
 			if err != nil {
@@ -56,7 +56,7 @@ func Execute() error {
 				token = os.Getenv(TOKEN_ENV)
 			}
 
-			req, err := http.NewRequest(http.MethodPost, "https://api.val.town/v1/eval", bytes.NewReader(body))
+			req, err := http.NewRequest(http.MethodPost, "https://api.val.town/v1/eval", bytes.NewReader(payload))
 			if err != nil {
 				return err
 			}
@@ -71,26 +71,23 @@ func Execute() error {
 				return err
 			}
 			defer resp.Body.Close()
-			res, err := io.ReadAll(resp.Body)
-			if err != nil {
+
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("error: %s", resp.Status)
+			}
+
+			var output any
+			if err := json.NewDecoder(resp.Body).Decode(&output); err != nil && err != io.EOF {
 				return err
 			}
 
-			if resp.StatusCode != http.StatusOK {
-				io.Copy(os.Stderr, resp.Body)
-				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-			}
-
-			var payload any
-			if err := json.Unmarshal(res, &payload); err != nil {
-				// not json
-				os.Stdout.Write(res)
+			if output == nil {
 				return nil
 			}
 
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetIndent("", "  ")
-			if err := encoder.Encode(payload); err != nil {
+			if err := encoder.Encode(output); err != nil {
 				return err
 			}
 
