@@ -14,6 +14,7 @@ import (
 
 const (
 	TOKEN_ENV = "VALTOWN_TOKEN"
+	EVAL_URL  = "https://api.val.town/v1/eval"
 )
 
 func Execute() error {
@@ -56,7 +57,7 @@ func Execute() error {
 				token = os.Getenv(TOKEN_ENV)
 			}
 
-			req, err := http.NewRequest(http.MethodPost, "https://api.val.town/v1/eval", bytes.NewReader(payload))
+			req, err := http.NewRequest(http.MethodPost, EVAL_URL, bytes.NewReader(payload))
 			if err != nil {
 				return err
 			}
