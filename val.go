@@ -86,6 +86,7 @@ func Execute() error {
 			}
 
 			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetEscapeHTML(false)
 			encoder.SetIndent("", "  ")
 			if err := encoder.Encode(output); err != nil {
 				return err
