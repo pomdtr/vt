@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	TOKEN_ENV = "VALTOWN_TOKEN"
-	EVAL_URL  = "https://api.val.town/v1/eval"
+	tokenEnv = "VALTOWN_TOKEN"
+	apiRoot  = "https://api.val.town/v1"
 )
 
 func NewCmdApi() *cobra.Command {
@@ -69,7 +69,7 @@ func NewCmdApi() *cobra.Command {
 				return err
 			}
 
-			req.Header.Set("Authorization", "Bearer "+os.Getenv(TOKEN_ENV))
+			req.Header.Set("Authorization", "Bearer "+os.Getenv(tokenEnv))
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
@@ -102,11 +102,6 @@ func NewCmdApi() *cobra.Command {
 	return cmd
 }
 
-type Expression struct {
-	Code string `json:"code"`
-	Args []any  `json:"args"`
-}
-
 func parseArg(input string) any {
 	if input == "" {
 		return nil
@@ -120,43 +115,31 @@ func parseArg(input string) any {
 	return input
 }
 
-func NewCmdEval() *cobra.Command {
-	rootCmd := &cobra.Command{
-		Use:          "eval [expression]",
-		Short:        "Evaluates a Val Town expression and prints the result.",
-		Args:         cobra.MaximumNArgs(1),
-		SilenceUsage: true,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 && isatty.IsTerminal(os.Stdin.Fd()) {
-				return fmt.Errorf("expression required")
-			}
+type RunPayload struct {
+	Args []any `json:"args"`
+}
 
-			return nil
-		},
+func NewCmdRun() *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run [val] [args...]",
+		Short: "Runs a Val Town function and prints the result.",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			expression := Expression{
+			payload := RunPayload{
 				Args: make([]any, 0),
 			}
 
-			if !isatty.IsTerminal(os.Stdin.Fd()) {
-				bs, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					return err
-				}
-
-				expression.Code = string(bs)
-
-				for _, arg := range args {
-					expression.Args = append(expression.Args, parseArg(arg))
-				}
-			} else {
-				expression.Code = args[0]
-				for _, arg := range args[1:] {
-					expression.Args = append(expression.Args, parseArg(arg))
-				}
+			for _, arg := range args[1:] {
+				payload.Args = append(payload.Args, parseArg(arg))
 			}
 
-			payload, err := json.Marshal(expression)
+			body, err := json.Marshal(payload)
+			if err != nil {
+				return err
+			}
+
+			val := strings.TrimPrefix(args[0], "@")
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/run/%s", apiRoot, val), bytes.NewReader(body))
 			if err != nil {
 				return err
 			}
@@ -167,10 +150,84 @@ func NewCmdEval() *cobra.Command {
 			}
 
 			if token == "" {
-				token = os.Getenv(TOKEN_ENV)
+				token = os.Getenv(tokenEnv)
 			}
 
-			req, err := http.NewRequest(http.MethodPost, EVAL_URL, bytes.NewReader(payload))
+			if token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("request failed: %s", resp.Status)
+			}
+
+			var output any
+			if err := json.NewDecoder(resp.Body).Decode(&output); err != nil && err != io.EOF {
+				return err
+			}
+
+			encoder := json.NewEncoder(os.Stdout)
+			encoder.SetEscapeHTML(false)
+			encoder.SetIndent("", "  ")
+			if err := encoder.Encode(output); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	return runCmd
+}
+
+type EvalPayload struct {
+	Code string `json:"code"`
+	Args []any  `json:"args,omitempty"`
+}
+
+func NewCmdEval() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "eval [expression]",
+		Short: "Evaluates a Val Town expression and prints the result.",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var expression string
+			if len(args) > 0 {
+				expression = args[0]
+			} else if !isatty.IsTerminal(os.Stdin.Fd()) {
+				bs, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+
+				expression = string(bs)
+			} else {
+				return fmt.Errorf("expression required")
+			}
+
+			body, err := json.Marshal(EvalPayload{
+				Code: expression,
+			})
+			if err != nil {
+				return err
+			}
+
+			token, err := cmd.Flags().GetString("token")
+			if err != nil {
+				return err
+			}
+
+			if token == "" {
+				token = os.Getenv(tokenEnv)
+			}
+
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/eval", apiRoot), bytes.NewReader(body))
 			if err != nil {
 				return err
 			}
@@ -195,10 +252,6 @@ func NewCmdEval() *cobra.Command {
 				return err
 			}
 
-			if output == nil {
-				return nil
-			}
-
 			encoder := json.NewEncoder(os.Stdout)
 			encoder.SetEscapeHTML(false)
 			encoder.SetIndent("", "  ")
@@ -210,7 +263,6 @@ func NewCmdEval() *cobra.Command {
 		},
 	}
 
-	rootCmd.PersistentFlags().StringP("token", "t", "", "token to use for authentication")
 	return rootCmd
 }
 
@@ -222,8 +274,11 @@ func Execute() error {
 
 	rootCmd.AddCommand(
 		NewCmdEval(),
+		NewCmdRun(),
 		NewCmdApi(),
 	)
+
+	rootCmd.PersistentFlags().String("token", "", "api token")
 
 	return rootCmd.Execute()
 }

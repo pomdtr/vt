@@ -22,8 +22,9 @@ Or download the appropriate binary / package from the [releases page](https://gi
 export VALTOWN_TOKEN='<your token>' # or use the --token flag
 
 vt eval '@me.helloWorld()'
-
 echo '1 + 1' | vt eval
+
+vt run me.myApi pomdtr
 
 vt api /alias/pomdtr
 ```
