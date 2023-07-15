@@ -104,7 +104,8 @@ func NewCmdApi() *cobra.Command {
 
 func NewCmdEval() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:          "val [expression]",
+		Use:          "eval [expression]",
+		Short:        "Evaluates a Val Town expression and prints the result.",
 		Args:         cobra.MaximumNArgs(1),
 		SilenceUsage: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
