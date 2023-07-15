@@ -21,7 +21,9 @@ Or download the appropriate binary / package from the [releases page](https://gi
 ```bash
 export VALTOWN_TOKEN='<your token>' # or use the --token flag
 
-val '@me.helloWorld()'
+vt eval '@me.helloWorld()'
 
-echo '1 + 1' | val
+echo '1 + 1' | vt eval
+
+vt api /alias/pomdtr
 ```

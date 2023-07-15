@@ -1,4 +1,4 @@
-module github.com/pomdtr/val
+module github.com/pomdtr/vt
 
 go 1.20
 
