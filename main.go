@@ -107,6 +107,19 @@ type Expression struct {
 	Args []any  `json:"args"`
 }
 
+func parseArg(input string) any {
+	if input == "" {
+		return nil
+	}
+
+	var parsed any
+	if err := json.Unmarshal([]byte(input), &parsed); err == nil {
+		return parsed
+	}
+
+	return input
+}
+
 func NewCmdEval() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:          "eval [expression]",
@@ -134,12 +147,12 @@ func NewCmdEval() *cobra.Command {
 				expression.Code = string(bs)
 
 				for _, arg := range args {
-					expression.Args = append(expression.Args, arg)
+					expression.Args = append(expression.Args, parseArg(arg))
 				}
 			} else {
 				expression.Code = args[0]
 				for _, arg := range args[1:] {
-					expression.Args = append(expression.Args, arg)
+					expression.Args = append(expression.Args, parseArg(arg))
 				}
 			}
 
