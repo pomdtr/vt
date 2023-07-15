@@ -102,6 +102,11 @@ func NewCmdApi() *cobra.Command {
 	return cmd
 }
 
+type Expression struct {
+	Code string `json:"code"`
+	Args []any  `json:"args"`
+}
+
 func NewCmdEval() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:          "eval [expression]",
@@ -116,20 +121,29 @@ func NewCmdEval() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var expression string
-			if len(args) > 0 {
-				expression = args[0]
-			} else {
-				b, err := io.ReadAll(os.Stdin)
+			expression := Expression{
+				Args: make([]any, 0),
+			}
+
+			if !isatty.IsTerminal(os.Stdin.Fd()) {
+				bs, err := io.ReadAll(os.Stdin)
 				if err != nil {
 					return err
 				}
-				expression = string(b)
+
+				expression.Code = string(bs)
+
+				for _, arg := range args {
+					expression.Args = append(expression.Args, arg)
+				}
+			} else {
+				expression.Code = args[0]
+				for _, arg := range args[1:] {
+					expression.Args = append(expression.Args, arg)
+				}
 			}
 
-			payload, err := json.Marshal(map[string]string{
-				"code": expression,
-			})
+			payload, err := json.Marshal(expression)
 			if err != nil {
 				return err
 			}
