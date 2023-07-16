@@ -151,8 +151,6 @@ func NewCmdApi() *cobra.Command {
 				return err
 			}
 
-			cmd.Printf("token: %s\n", token)
-
 			if token != "" {
 				req.Header.Set("Authorization", "Bearer "+token)
 			}
