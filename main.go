@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mattn/go-isatty"
@@ -15,9 +16,85 @@ import (
 )
 
 const (
-	tokenEnv = "VALTOWN_TOKEN"
-	apiRoot  = "https://api.val.town/v1"
+	apiRoot = "https://api.val.town/v1"
 )
+
+func NewCmdPrint() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "print",
+	}
+
+	cmd.AddCommand(NewCmdPrintToken())
+	cmd.AddCommand(NewCmdPrintVal())
+
+	return cmd
+}
+
+func NewCmdPrintToken() *cobra.Command {
+	return &cobra.Command{
+		Use:  "token",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := cmd.Flags().GetString("token")
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(token)
+			return nil
+		},
+	}
+}
+
+type ValResponse struct {
+	Code string `json:"code"`
+}
+
+func NewCmdPrintVal() *cobra.Command {
+	return &cobra.Command{
+		Use:  "val <val>",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := cmd.Flags().GetString("token")
+			if err != nil {
+				return err
+			}
+
+			val := strings.TrimPrefix(args[0], "@")
+			parts := strings.Split(val, ".")
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid val: %s", val)
+			}
+
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/alias/%s/%s", apiRoot, parts[0], parts[1]), nil)
+			if err != nil {
+				return err
+			}
+
+			if token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				return fmt.Errorf("request failed: %s", resp.Status)
+			}
+
+			var output ValResponse
+			if err := json.NewDecoder(resp.Body).Decode(&output); err != nil && err != io.EOF {
+				return err
+			}
+
+			fmt.Println(output.Code)
+			return nil
+		},
+	}
+}
 
 func NewCmdApi() *cobra.Command {
 	cmd := &cobra.Command{
@@ -69,7 +146,16 @@ func NewCmdApi() *cobra.Command {
 				return err
 			}
 
-			req.Header.Set("Authorization", "Bearer "+os.Getenv(tokenEnv))
+			token, err := cmd.Flags().GetString("token")
+			if err != nil {
+				return err
+			}
+
+			cmd.Printf("token: %s\n", token)
+
+			if token != "" {
+				req.Header.Set("Authorization", "Bearer "+token)
+			}
 
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
@@ -149,10 +235,6 @@ func NewCmdRun() *cobra.Command {
 				return err
 			}
 
-			if token == "" {
-				token = os.Getenv(tokenEnv)
-			}
-
 			if token != "" {
 				req.Header.Set("Authorization", "Bearer "+token)
 			}
@@ -223,10 +305,6 @@ func NewCmdEval() *cobra.Command {
 				return err
 			}
 
-			if token == "" {
-				token = os.Getenv(tokenEnv)
-			}
-
 			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/eval", apiRoot), bytes.NewReader(body))
 			if err != nil {
 				return err
@@ -268,7 +346,42 @@ func NewCmdEval() *cobra.Command {
 
 func Execute() error {
 	rootCmd := &cobra.Command{
-		Use:          "vt",
+		Use: "vt",
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().Changed("token") {
+				return nil
+			}
+
+			if env, ok := os.LookupEnv("VALTOWN_TOKEN"); ok {
+				if err := cmd.Flags().Set("token", env); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				return fmt.Errorf("failed to get home directory: %w", err)
+			}
+
+			tokenFile := filepath.Join(homeDir, ".config", "vt", "api_token")
+			if _, err := os.Stat(tokenFile); err == nil {
+				bs, err := os.ReadFile(tokenFile)
+				if err != nil {
+					return fmt.Errorf("failed to read token file: %w", err)
+				}
+
+				if err := cmd.Flags().Set("token", strings.TrimSpace(string(bs))); err != nil {
+					return err
+				}
+
+				return nil
+			}
+
+			return nil
+		},
+
 		SilenceUsage: true,
 	}
 
@@ -276,6 +389,7 @@ func Execute() error {
 		NewCmdEval(),
 		NewCmdRun(),
 		NewCmdApi(),
+		NewCmdPrint(),
 	)
 
 	rootCmd.PersistentFlags().String("token", "", "api token")
