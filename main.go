@@ -9,9 +9,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/mattn/go-isatty"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
 
@@ -19,9 +21,49 @@ const (
 	apiRoot = "https://api.val.town/v1"
 )
 
+var (
+	valRegexp = regexp.MustCompile(`^@?([a-zA-Z0-9_]+\.[a-zA-Z0-9_]+)$`)
+)
+
+func NewCmdOpen() *cobra.Command {
+	return &cobra.Command{
+		Use:   "open <val>",
+		Short: "Opens a Val Town val in the browser.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			matches := valRegexp.FindStringSubmatch(args[0])
+			if len(matches) > 0 {
+				return browser.OpenURL(fmt.Sprintf("https://val.town/v/%s", matches[1]))
+			}
+
+			valUrl, err := url.Parse(args[0])
+			if err != nil {
+				return err
+			}
+
+			if strings.HasSuffix(valUrl.Host, ".express.val.run") {
+				parts := strings.Split(strings.Split(valUrl.Host, ".")[0], "-")
+				if len(parts) != 2 {
+					return fmt.Errorf("invalid val: %s", args[0])
+				}
+
+				return browser.OpenURL(fmt.Sprintf("https://val.town/v/%s.%s", parts[0], parts[1]))
+			}
+
+			if valUrl.Host == "api.val.town" && strings.HasPrefix(valUrl.Path, "/v1/run/") {
+				val := strings.TrimPrefix(valUrl.Path, "/v1/run/")
+				return browser.OpenURL(fmt.Sprintf("https://val.town/v/%s", val))
+			}
+
+			return fmt.Errorf("invalid val: %s", args[0])
+		},
+	}
+}
+
 func NewCmdPrint() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "print",
+		Use:   "print",
+		Short: "Prints useful information about the current Val Town environment.",
 	}
 
 	cmd.AddCommand(NewCmdPrintToken())
@@ -384,6 +426,7 @@ func Execute() error {
 	}
 
 	rootCmd.AddCommand(
+		NewCmdOpen(),
 		NewCmdEval(),
 		NewCmdRun(),
 		NewCmdApi(),
