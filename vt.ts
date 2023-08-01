@@ -2,7 +2,7 @@ import {
   Command,
   CompletionsCommand,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
-import { VALTOWN_TOKEN_ENV, client } from "./client.ts";
+import { VALTOWN_TOKEN_ENV, apiRoot, client } from "./client.ts";
 import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 
 export function splitVal(val: string) {
@@ -224,6 +224,37 @@ rootCmd
 
     console.log(code);
   });
+
+rootCmd
+  .command("api")
+  .arguments("<path:string>")
+  .option("-X, --method <method:string>", "HTTP method.", { default: "GET" })
+  .option("-d, --data <data:string>", "Request Body")
+  .action(
+    async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV), method, data }, path) => {
+      if (!path.startsWith("/")) {
+        path = `/${path}`;
+      }
+      if (!path.startsWith("/v1")) {
+        path = `/v1${path}`;
+      }
+
+      const resp = await fetch(`${apiRoot}${path}`, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: data,
+      });
+
+      if (resp.status != 200) {
+        throw new Error(resp.statusText);
+      }
+
+      const body = await resp.json();
+      console.log(JSON.stringify(body, null, 2));
+    }
+  );
 
 rootCmd
   .command("token")
