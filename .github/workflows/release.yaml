@@ -20,20 +20,29 @@ jobs:
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: write binary name
-        id: binary
+      - name: extract version
+        id: extract-version
         run: |
           VERSION=${GITHUB_REF_NAME#v}
-          echo "name=./vt-$VERSION-${{matrix.target}}${{matrix.target == 'x86_64-pc-windows-msvc' && '.exe'}}" >> $GITHUB_OUTPUT
+          echo "name=$VERSION" >> $GITHUB_OUTPUT
       - run: |
           deno compile \
             --target ${{ matrix.target }} \
-            --output ${{steps.binary.outputs.name}} \
             ./vt.ts
+      - run: |
+          OUTPUT=vt-${{steps.extract-version.outputs.name}}-${{matrix.target}}.tar.gz
+          tar zcvf "$OUTPUT" vt LICENSE README.md
+          echo "OUTPUT=$OUTPUT" >> $GITHUB_ENV
+        if: matrix.target != 'x86_64-pc-windows-msvc'
+      - run: |
+          OUTPUT=vt-${{steps.extract-version.outputs.name}}-${{matrix.target}}.zip
+          zip "$OUTPUT" vt.exe LICENSE README.md
+          echo "OUTPUT=$OUTPUT" >> $GITHUB_ENV
+        if: matrix.target == 'x86_64-pc-windows-msvc'
       - uses: actions/upload-artifact@v3
         with:
           name: build
-          path: ${{steps.binary.outputs.name}}
+          path: ${{github.env.OUTPUT}}
   publish:
     needs: [compile]
     runs-on: ubuntu-latest
@@ -41,8 +50,8 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: build
-          path: bin
+          path: output
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-            bin/*
+            output/*
