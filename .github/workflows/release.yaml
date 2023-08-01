@@ -1,10 +1,12 @@
 name: Publish Release
 on:
   push:
-    # tags:
-    #   - "v*"
+    tags:
+      - "v*"
+permissions:
+  contents: write
 jobs:
-  publish:
+  compile:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,3 +30,19 @@ jobs:
             --target ${{ matrix.target }} \
             --output ./vt-${{steps.version.outputs.res}}-${{matrix.target}} \
             ./vt.ts
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: ./vt-${{steps.version.outputs.res}}-${{matrix.target}}
+  publish:
+    needs: [compile]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: build
+          path: bin
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            bin/*

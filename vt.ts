@@ -37,7 +37,6 @@ async function editText(text: string, extension: string) {
 const rootCmd = new Command()
   .name("vt")
   .globalOption("-t, --token [token:string]", "Valtown API token.")
-  .version("0.0.1")
   .action(() => {
     rootCmd.showHelp();
   });
@@ -55,6 +54,42 @@ rootCmd
         Authorization: `Bearer ${token}`,
       },
     });
+  });
+
+rootCmd
+  .command("run")
+  .description("Run a val.")
+  .arguments("<val:string> [args...]")
+  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, val, ...args) => {
+    const { author, name } = splitVal(val);
+
+    const resp = await client["/v1/run/{username}.{val_name}"].post({
+      // @ts-ignore: path params extraction is broken
+      params: {
+        username: author,
+        val_name: name,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      json: {
+        args: args.map((arg) => {
+          try {
+            return JSON.parse(arg);
+          } catch {
+            return arg;
+          }
+        }),
+      },
+    });
+
+    if (resp.status !== 200) {
+      console.error(resp.body);
+      Deno.exit(1);
+    }
+
+    const body = await resp.json();
+    console.log(JSON.stringify(body, null, 2));
   });
 
 const editor = Deno.env.get("EDITOR") || "vim";
@@ -163,42 +198,6 @@ rootCmd
     );
 
     table.render();
-  });
-
-rootCmd
-  .command("run")
-  .description("Run a val.")
-  .arguments("<val:string> [args...]")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, val, ...args) => {
-    const { author, name } = splitVal(val);
-
-    const resp = await client["/v1/run/{username}.{val_name}"].post({
-      // @ts-ignore: path params extraction is broken
-      params: {
-        username: author,
-        val_name: name,
-      },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      json: {
-        args: args.map((arg) => {
-          try {
-            return JSON.parse(arg);
-          } catch {
-            return arg;
-          }
-        }),
-      },
-    });
-
-    if (resp.status !== 200) {
-      console.error(resp.body);
-      Deno.exit(1);
-    }
-
-    const body = await resp.json();
-    console.log(JSON.stringify(body, null, 2));
   });
 
 rootCmd
