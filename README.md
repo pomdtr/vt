@@ -11,9 +11,9 @@ or download the binary from the [releases](https://github.com/pomdtr/vt/releases
 ## Usage
 
 ```bash
-export VT_TOKEN='<your token>'
+export VALTOWN_TOKEN='<your token>'
 
 vt edit pomdtr.add
 ```
 
-Use `vt --help` to list all available options.
+Use `vt --help` to list all available commands.
