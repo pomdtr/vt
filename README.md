@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-deno install -A https://deno.land/x/vt_cli/vt.ts
+deno install -A https://raw.githubusercontent.com/pomdtr/vt/main/vt.ts
 ```
 
 <!-- or download the binary from the [releases](https://github.com/pomdtr/vt/releases) page. -->
