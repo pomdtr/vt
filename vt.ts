@@ -3,7 +3,7 @@ import {
   CompletionsCommand,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
 import { VALTOWN_TOKEN_ENV, apiRoot, client } from "./client.ts";
-import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
+import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
 
 export function splitVal(val: string) {
   if (val.startsWith("@")) {
