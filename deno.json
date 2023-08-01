@@ -1,6 +1,6 @@
 {
     "tasks": {
-        "openapi": "deno eval -p 'await fetch(\"https://pomdtr-valTownSpec.express.val.run\").then(res => res.text())'",
+        "openapi": "deno eval -p 'await fetch(\"https://pomdtr-valTownSpec.express.val.run\").then(res => res.text())' > openapi.ts",
         "compile": "deno compile -A vt.ts"
     }
 }

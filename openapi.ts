@@ -41,6 +41,14 @@ export default {
         ],
         "description": "Can be anything: string, number, array, object, etc., including `null`"
       },
+      "Relationship": {
+        "type": "string",
+        "enum": [
+          "received",
+          "given",
+          "any"
+        ]
+      },
       "User": {
         "type": "object",
         "properties": {
@@ -192,6 +200,34 @@ export default {
           }
         }
       },
+      "ValRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The id of the val",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the val",
+            "type": "string"
+          },
+          "author_id": {
+            "description": "The id of the val's author",
+            "type": "string"
+          },
+          "username": {
+            "description": "The username of the val's author",
+            "type": "string"
+          },
+          "public": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "BaseRun": {
         "type": "object",
         "properties": {
@@ -214,23 +250,10 @@ export default {
           },
           "author": {
             "type": "object",
-            "properties": {
-              "id": {
-                "description": "The id of the val's author",
-                "type": "string"
-              },
-              "username": {
-                "description": "The username of the val's author",
-                "type": "string"
-              }
-            }
+            "properties": null
           },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32"
+          "val": {
+            "$ref": "#/components/schemas/ValRef"
           }
         }
       },
@@ -269,6 +292,55 @@ export default {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BaseRun"
+            }
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "description": "The id of the comment's author",
+                "type": "string"
+              },
+              "username": {
+                "description": "The username of the comment's author",
+                "type": "string"
+              }
+            }
+          },
+          "comment": {
+            "description": "The contents of the comment",
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "val": {
+            "$ref": "#/components/schemas/ValRef"
+          }
+        }
+      },
+      "CommentList": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedList"
+          }
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comment"
             }
           }
         }
@@ -399,6 +471,91 @@ export default {
           "minimum": 1,
           "maximum": 100
         }
+      },
+      "comments_since": {
+        "name": "since",
+        "in": "query",
+        "description": "Return runs where `createdAt > since` (non-inclusive)",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "isostring": {
+            "$ref": "#/components/examples/isostring"
+          }
+        }
+      },
+      "comments_until": {
+        "name": "until",
+        "in": "query",
+        "description": "Return runs where `createdAt <= until` (inclusive)",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "isostring": {
+            "$ref": "#/components/examples/isostring"
+          }
+        }
+      },
+      "relationship": {
+        "name": "relationship",
+        "in": "query",
+        "schema": {
+          "$ref": "#/components/schemas/Relationship"
+        }
+      },
+      "runs_since": {
+        "name": "since",
+        "in": "query",
+        "description": "Return runs where `runStartAt > since` (non-inclusive)",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "isostring": {
+            "$ref": "#/components/examples/isostring"
+          }
+        }
+      },
+      "runs_until": {
+        "name": "until",
+        "in": "query",
+        "description": "Return runs where `runStartAt <= until` (inclusive)",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "isostring": {
+            "$ref": "#/components/examples/isostring"
+          }
+        }
+      },
+      "runs_source": {
+        "name": "source",
+        "in": "query",
+        "description": "Only return runs that were triggered by one of the specified sources. It accepts a single source (`ui`) or multiple sources joined by commas (`api,email`). The available sources are: ui, api, interval, email",
+        "schema": {
+          "type": "string"
+        },
+        "examples": {
+          "one_source": {
+            "value": "ui",
+            "description": "Return runs triggered by the app ui"
+          },
+          "multiple_source": {
+            "value": "api,interval",
+            "description": "Returns runs triggered by either the api, or an interval"
+          }
+        }
+      },
+      "runs_error": {
+        "name": "error",
+        "in": "query",
+        "description": "Filter by whether a run had an error. \\ true - Returns runs that resulted in an error \\ false - Returns runs that succeeded \\ omit the query param to return any run",
+        "schema": {
+          "type": "boolean"
+        }
       }
     },
     "examples": {
@@ -457,6 +614,10 @@ export default {
           "likeCount": 0,
           "referenceCount": 0
         }
+      },
+      "isostring": {
+        "value": "2023-07-26T03:28:00.000Z",
+        "summary": "ISO String"
       }
     },
     "responses": {
@@ -546,6 +707,18 @@ export default {
           },
           {
             "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/runs_since"
+          },
+          {
+            "$ref": "#/components/parameters/runs_until"
+          },
+          {
+            "$ref": "#/components/parameters/runs_source"
+          },
+          {
+            "$ref": "#/components/parameters/runs_error"
           }
         ],
         "responses": {
@@ -586,6 +759,46 @@ export default {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/v1/me/comments": {
+      "get": {
+        "summary": "Get comments related to current user, either given or received",
+        "tags": [
+          "Me"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/comments_since"
+          },
+          {
+            "$ref": "#/components/parameters/comments_until"
+          },
+          {
+            "$ref": "#/components/parameters/relationship"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentList"
                 }
               }
             }
@@ -838,6 +1051,18 @@ export default {
           },
           {
             "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/runs_since"
+          },
+          {
+            "$ref": "#/components/parameters/runs_until"
+          },
+          {
+            "$ref": "#/components/parameters/runs_source"
+          },
+          {
+            "$ref": "#/components/parameters/runs_error"
           }
         ],
         "responses": {
