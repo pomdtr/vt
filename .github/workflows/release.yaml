@@ -27,6 +27,7 @@ jobs:
           echo "name=$VERSION" >> $GITHUB_OUTPUT
       - run: |
           deno compile \
+            --allow-all \
             --target ${{ matrix.target }} \
             ./vt.ts
       - run: |
