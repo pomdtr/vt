@@ -146,61 +146,6 @@ rootCmd
   });
 
 rootCmd
-  .command("list")
-  .description("List vals.")
-  .option("-u, --user <user:string>", "Filter by user.")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV), user }) => {
-    if (!user) {
-      const meResp = await client["/v1/me"].get({
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (meResp.status != 200) {
-        throw new Error();
-      }
-
-      const { id } = await meResp.json();
-      if (!id) {
-        throw new Error();
-      }
-
-      user = id;
-    }
-
-    const listResp = await client["/v1/users/{user_id}/vals"].get({
-      params: {
-        user_id: user,
-      },
-      query: {
-        limit: 100,
-      },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (listResp.status != 200) {
-      throw new Error();
-    }
-
-    const { data } = await listResp.json();
-    if (!data) {
-      throw new Error();
-    }
-
-    const table = new Table().body(
-      data?.map((val) => [
-        `${val.author?.username}.${val.name}`,
-        val.public ? "public" : "private",
-        val.version,
-      ])
-    );
-
-    table.render();
-  });
-
-rootCmd
   .command("view")
   .description("View val code.")
   .arguments("<val:string>")
