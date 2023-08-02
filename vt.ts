@@ -2,7 +2,7 @@ import {
   Command,
   CompletionsCommand,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
-import { VALTOWN_TOKEN_ENV, apiRoot, client } from "./client.ts";
+import { apiRoot, client } from "./client.ts";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
 
 export function splitVal(val: string) {
@@ -36,7 +36,10 @@ async function editText(text: string, extension: string) {
 
 const rootCmd = new Command()
   .name("vt")
-  .globalOption("-t, --token [token:string]", "Valtown API token.")
+  .globalEnv("VALTOWN_TOKEN=<value:string>", "Valtown API token env var.", {
+    prefix: "VALTOWN_",
+    required: true,
+  })
   .action(() => {
     rootCmd.showHelp();
   });
@@ -45,7 +48,7 @@ rootCmd
   .command("eval")
   .description("Eval an expression.")
   .arguments("<expression:string>")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, expression) => {
+  .action(async ({ token }, expression) => {
     await client["/v1/eval"].post({
       json: {
         code: expression,
@@ -60,7 +63,7 @@ rootCmd
   .command("run")
   .description("Run a val.")
   .arguments("<val:string> [args...]")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, val, ...args) => {
+  .action(async ({ token }, val, ...args) => {
     const { author, name } = splitVal(val);
 
     const resp = await client["/v1/run/{username}.{val_name}"].post({
@@ -97,7 +100,7 @@ rootCmd
   .command("edit")
   .description("Edit a val in the system editor.")
   .arguments("<val:string>")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, val) => {
+  .action(async ({ token }, val) => {
     const { author, name } = splitVal(val);
     const getResp = await client["/v1/alias/{username}/{val_name}"].get({
       params: {
@@ -149,7 +152,7 @@ rootCmd
   .command("view")
   .description("View val code.")
   .arguments("<val:string>")
-  .action(async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }, val) => {
+  .action(async ({ token }, val) => {
     const { author, name } = splitVal(val);
     const resp = await client["/v1/alias/{username}/{val_name}"].get({
       params: {
@@ -172,39 +175,39 @@ rootCmd
 
 rootCmd
   .command("api")
+  .description("Make an API request.")
+  .example("Get your user info", "vt api /v1/me")
   .arguments("<path:string>")
   .option("-X, --method <method:string>", "HTTP method.", { default: "GET" })
   .option("-d, --data <data:string>", "Request Body")
-  .action(
-    async ({ token = Deno.env.get(VALTOWN_TOKEN_ENV), method, data }, path) => {
-      if (!path.startsWith("/")) {
-        path = `/${path}`;
-      }
-      if (!path.startsWith("/v1")) {
-        path = `/v1${path}`;
-      }
-
-      const resp = await fetch(`${apiRoot}${path}`, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: data,
-      });
-
-      if (resp.status != 200) {
-        throw new Error(resp.statusText);
-      }
-
-      const body = await resp.json();
-      console.log(JSON.stringify(body, null, 2));
+  .action(async ({ token, method, data }, path) => {
+    if (!path.startsWith("/")) {
+      path = `/${path}`;
     }
-  );
+    if (!path.startsWith("/v1")) {
+      path = `/v1${path}`;
+    }
+
+    const resp = await fetch(`${apiRoot}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: data,
+    });
+
+    if (resp.status != 200) {
+      throw new Error(resp.statusText);
+    }
+
+    const body = await resp.json();
+    console.log(JSON.stringify(body, null, 2));
+  });
 
 rootCmd
   .command("token")
   .hidden()
-  .action(({ token = Deno.env.get(VALTOWN_TOKEN_ENV) }) => {
+  .action(({ token }) => {
     console.log(token);
   });
 
