@@ -54,7 +54,7 @@ rootCmd
   .description("Eval an expression.")
   .arguments("<expression:string>")
   .action(async ({ token }, expression) => {
-    await client["/v1/eval"].post({
+    const resp = await client["/v1/eval"].post({
       json: {
         code: expression,
       },
@@ -62,6 +62,12 @@ rootCmd
         Authorization: `Bearer ${token}`,
       },
     });
+
+    if (resp.status !== 200) {
+      throw new Error(resp.statusText);
+    }
+
+    console.log(await resp.text());
   });
 
 rootCmd
