@@ -1,7 +1,8 @@
 import {
   Command,
   CompletionsCommand,
-} from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+} from "https://deno.land/x/cliffy@v1.0.0-rc.2/command/mod.ts";
+import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 import * as shlex from "npm:shlex";
 import { apiRoot, client } from "./client.ts";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
@@ -174,6 +175,38 @@ rootCmd
     const { code } = await resp.json();
 
     console.log(code);
+  });
+
+rootCmd
+  .command("search")
+  .arguments("<query:string>")
+  .action(async ({ token }, query) => {
+    const resp = await client["/v1/search/vals"].get({
+      query: {
+        query: query,
+        limit: 100,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const { data } = await resp.json();
+    if (!data) {
+      throw new Error("no data");
+    }
+    const rows = data.map((val) => {
+      const name = `${val.author?.username}.${val.name}`;
+      const link = `https://val.town/v/${name.slice(1)}`;
+      return [name, `v${val.version}`, link];
+    });
+
+    if (Deno.isatty(Deno.stdout.rid)) {
+      const table = new Table(...rows);
+      table.render();
+    } else {
+      console.log(rows.map((row) => row.join("\t")).join("\n"));
+    }
   });
 
 rootCmd
