@@ -20,30 +20,26 @@ jobs:
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
-      - name: extract version
-        id: extract-version
-        run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          echo "name=$VERSION" >> $GITHUB_OUTPUT
       - run: |
           deno compile \
             --allow-all \
             --target ${{ matrix.target }} \
             ./vt.ts
-      - run: |
-          OUTPUT=vt-${{steps.extract-version.outputs.name}}-${{matrix.target}}.tar.gz
-          tar zcvf "$OUTPUT" vt LICENSE README.md
-          echo "OUTPUT=$OUTPUT" >> $GITHUB_ENV
-        if: matrix.target != 'x86_64-pc-windows-msvc'
-      - run: |
-          OUTPUT=vt-${{steps.extract-version.outputs.name}}-${{matrix.target}}.zip
-          zip "$OUTPUT" vt.exe LICENSE README.md
-          echo "OUTPUT=$OUTPUT" >> $GITHUB_ENV
-        if: matrix.target == 'x86_64-pc-windows-msvc'
+      - name: Create Archive
+        id: archive
+        run: |
+          ARCHIVE_NAME=name=vt-${GITHUB_REF_NAME#v}-${{matrix.target}}
+          if [ matrix.target == 'x86_64-pc-windows-msvc' ]; then
+            zip "${ARCHIVE_NAME}.zip" vt.exe LICENSE README.md
+            echo "${ARCHIVE_NAME}.zip" >> $GITHUB_OUTPUT
+          else
+            tar zcvf "${ARCHIVE_NAME}.tar.gz" vt LICENSE README.md
+            echo "name="${ARCHIVE_NAME}.tar.gz" >> $GITHUB_OUTPUT
+          fi
       - uses: actions/upload-artifact@v3
         with:
           name: build
-          path: ${{env.OUTPUT}}
+          path: ${{steps.archive.outputs.name}}
   publish:
     needs: [compile]
     runs-on: ubuntu-latest
