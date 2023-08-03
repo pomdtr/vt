@@ -202,7 +202,7 @@ rootCmd
     });
 
     if (Deno.isatty(Deno.stdout.rid)) {
-      const table = new Table(...rows);
+      const table = new Table(...rows).header(["name", "version", "link"]);
       table.render();
     } else {
       console.log(rows.map((row) => row.join("\t")).join("\n"));
