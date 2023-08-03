@@ -21,4 +21,5 @@ Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [h
 - `edit <val>` : Edit a val in the system editor.
 - `open <val>` : Open a val in the system browser.
 - `view <val>` : View val code.
+- `search <query>` : Search for vals.
 - `api <path>` : Make an API request.
