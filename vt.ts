@@ -2,6 +2,7 @@ import {
   Command,
   CompletionsCommand,
 } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import * as shlex from "npm:shlex";
 import { apiRoot, client } from "./client.ts";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
 
@@ -19,8 +20,11 @@ async function editText(text: string, extension: string) {
     suffix: `.${extension}`,
   });
   await Deno.writeTextFile(tempfile, text);
-  const command = new Deno.Command(editor, {
-    args: [tempfile],
+  const editor = Deno.env.get("EDITOR") || "vim";
+  const [name, ...args] = [...shlex.split(editor), tempfile];
+
+  const command = new Deno.Command(name, {
+    args,
     stdin: "inherit",
     stderr: "inherit",
     stdout: "inherit",
@@ -95,7 +99,6 @@ rootCmd
     console.log(JSON.stringify(body, null, 2));
   });
 
-const editor = Deno.env.get("EDITOR") || "vim";
 rootCmd
   .command("edit")
   .description("Edit a val in the system editor.")

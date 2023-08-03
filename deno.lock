@@ -90,7 +90,8 @@
   },
   "npm": {
     "specifiers": {
-      "fets": "fets@0.4.9_ajv@8.12.0_ajv-formats@2.1.1__ajv@8.12.0_zod@3.21.4"
+      "fets": "fets@0.4.9_ajv@8.12.0_ajv-formats@2.1.1__ajv@8.12.0_zod@3.21.4",
+      "shlex": "shlex@2.1.2"
     },
     "packages": {
       "@ardatan/fast-json-stringify@0.0.6_ajv@8.12.0_ajv-formats@2.1.1__ajv@8.12.0": {
@@ -243,6 +244,10 @@
       },
       "rfdc@1.3.0": {
         "integrity": "sha512-V2hovdzFbOi77/WajaSMXk2OLm+xNIeQdMMuB7icj7bk6zi2F8GGAxigcnDFpJHbNyNcgyJDiP+8nOrY5cZGrA==",
+        "dependencies": {}
+      },
+      "shlex@2.1.2": {
+        "integrity": "sha512-Nz6gtibMVgYeMEhUjp2KuwAgqaJA1K155dU/HuDaEJUGgnmYfVtVZah+uerVWdH8UGnyahhDCgABbYTbs254+w==",
         "dependencies": {}
       },
       "streamsearch@1.1.0": {
