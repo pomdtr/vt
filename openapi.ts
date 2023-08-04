@@ -6,62 +6,30 @@ export default {
       "The Val Town API provides services to evaluate JavaScript and TypeScript expressions, run vals as APIs, either as functions or Express handlers.\n\nLearn more at [https://docs.val.town](https://docs.val.town)\n",
     version: "1.5.1",
   },
-  servers: [
-    {
-      url: "https://api.val.town",
-      description: "Val Town API v1",
-    },
-  ],
+  servers: [{ url: "https://api.val.town", description: "Val Town API v1" }],
   components: {
     securitySchemes: {
-      bearerAuth: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "API Key",
-      },
+      bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "API Key" },
     },
     schemas: {
       JSON: {
         oneOf: [
-          {
-            type: "string",
-          },
-          {
-            type: "number",
-          },
-          {
-            type: "object",
-          },
-          {
-            type: "array",
-            items: {},
-          },
-          {
-            type: "boolean",
-          },
+          { type: "string" },
+          { type: "number" },
+          { type: "object" },
+          { type: "array", items: {} },
+          { type: "boolean" },
         ],
         description:
           "Can be anything: string, number, array, object, etc., including `null`",
       },
-      Relationship: {
-        type: "string",
-        enum: ["received", "given", "any"],
-      },
+      Relationship: { type: "string", enum: ["received", "given", "any"] },
       User: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-          },
-          username: {
-            description: "The user's username",
-            type: "string",
-          },
-          bio: {
-            description: "The user's bio",
-            type: ["string", "null"],
-          },
+          id: { type: "string", format: "uuid" },
+          username: { description: "The user's username", type: "string" },
+          bio: { description: "The user's bio", type: ["string", "null"] },
           profileImageUrl: {
             description: "The url for the user's profile picture",
             type: ["string", "null"],
@@ -71,89 +39,42 @@ export default {
       BaseVal: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-          },
+          id: { type: "string", format: "uuid" },
           author: {
             type: "object",
             properties: {
-              id: {
-                description: "The id of the val's author",
-                type: "string",
-              },
+              id: { description: "The id of the val's author", type: "string" },
               username: {
                 description: "The username of the val's author",
                 type: "string",
               },
             },
           },
-          name: {
-            type: "string",
-          },
-          code: {
-            type: "string",
-          },
-          public: {
-            type: "boolean",
-          },
-          version: {
-            type: "integer",
-            format: "int32",
-          },
-          runEndAt: {
-            type: "string",
-            format: "date-time",
-          },
-          runStartAt: {
-            type: "string",
-            format: "date-time",
-          },
+          name: { type: "string" },
+          code: { type: "string" },
+          public: { type: "boolean" },
+          version: { type: "integer", format: "int32" },
+          runEndAt: { type: "string", format: "date-time" },
+          runStartAt: { type: "string", format: "date-time" },
         },
       },
       FullVal: {
         type: "object",
-        allOf: [
-          {
-            $ref: "#/components/schemas/BaseVal",
-          },
-        ],
+        allOf: [{ $ref: "#/components/schemas/BaseVal" }],
         properties: {
-          logs: {
-            type: "array",
-            items: {},
-          },
-          output: {
-            type: "object",
-          },
-          error: {
-            type: "object",
-          },
-          readme: {
-            type: "string",
-          },
-          likeCount: {
-            type: "number",
-          },
-          referenceCount: {
-            type: "number",
-          },
+          logs: { type: "array", items: {} },
+          output: { type: "object" },
+          error: { type: "object" },
+          readme: { type: "string" },
+          likeCount: { type: "number" },
+          referenceCount: { type: "number" },
         },
       },
-      ValInput: {
-        type: "object",
-        properties: {
-          code: {
-            type: "string",
-          },
-        },
-      },
+      ValInput: { type: "object", properties: { code: { type: "string" } } },
       PaginatedList: {
         type: "object",
         properties: {
-          data: {
-            type: "array",
-          },
+          data: { type: "array" },
           links: {
             type: "object",
             properties: {
@@ -178,31 +99,19 @@ export default {
       },
       ValList: {
         type: "object",
-        allOf: [
-          {
-            $ref: "#/components/schemas/PaginatedList",
-          },
-        ],
+        allOf: [{ $ref: "#/components/schemas/PaginatedList" }],
         properties: {
           data: {
             type: "array",
-            items: {
-              $ref: "#/components/schemas/BaseVal",
-            },
+            items: { $ref: "#/components/schemas/BaseVal" },
           },
         },
       },
       ValRef: {
         type: "object",
         properties: {
-          id: {
-            description: "The id of the val",
-            type: "string",
-          },
-          name: {
-            description: "The name of the val",
-            type: "string",
-          },
+          id: { description: "The id of the val", type: "string" },
+          name: { description: "The name of the val", type: "string" },
           author_id: {
             description: "The id of the val's author",
             type: "string",
@@ -211,90 +120,46 @@ export default {
             description: "The username of the val's author",
             type: "string",
           },
-          public: {
-            type: "boolean",
-          },
-          version: {
-            type: "integer",
-            format: "int32",
-          },
+          public: { type: "boolean" },
+          version: { type: "integer", format: "int32" },
         },
       },
       BaseRun: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-          },
+          id: { type: "string", format: "uuid" },
           error: {},
-          parentId: {
-            type: "string",
-            format: "uuid",
-          },
-          runEndAt: {
-            type: "string",
-            format: "date-time",
-          },
-          runStartAt: {
-            type: "string",
-            format: "date-time",
-          },
-          author: {
-            type: "object",
-            properties: null,
-          },
-          val: {
-            $ref: "#/components/schemas/ValRef",
-          },
+          parentId: { type: "string", format: "uuid" },
+          runEndAt: { type: "string", format: "date-time" },
+          runStartAt: { type: "string", format: "date-time" },
+          author: { type: "object", properties: null },
+          val: { $ref: "#/components/schemas/ValRef" },
         },
       },
       FullRun: {
         type: "object",
-        allOf: [
-          {
-            $ref: "#/components/schemas/BaseRun",
-          },
-        ],
+        allOf: [{ $ref: "#/components/schemas/BaseRun" }],
         properties: {
-          emails: {
-            type: "array",
-            items: {},
-          },
-          logs: {
-            type: "array",
-            items: {},
-          },
+          emails: { type: "array", items: {} },
+          logs: { type: "array", items: {} },
           returnValue: {},
-          args: {
-            type: "array",
-            items: {},
-          },
+          args: { type: "array", items: {} },
         },
       },
       RunList: {
         type: "object",
-        allOf: [
-          {
-            $ref: "#/components/schemas/PaginatedList",
-          },
-        ],
+        allOf: [{ $ref: "#/components/schemas/PaginatedList" }],
         properties: {
           data: {
             type: "array",
-            items: {
-              $ref: "#/components/schemas/BaseRun",
-            },
+            items: { $ref: "#/components/schemas/BaseRun" },
           },
         },
       },
       Comment: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-          },
+          id: { type: "string", format: "uuid" },
           author: {
             type: "object",
             properties: {
@@ -312,28 +177,17 @@ export default {
             description: "The contents of the comment",
             type: "string",
           },
-          createdAt: {
-            type: "string",
-            format: "date-time",
-          },
-          val: {
-            $ref: "#/components/schemas/ValRef",
-          },
+          createdAt: { type: "string", format: "date-time" },
+          val: { $ref: "#/components/schemas/ValRef" },
         },
       },
       CommentList: {
         type: "object",
-        allOf: [
-          {
-            $ref: "#/components/schemas/PaginatedList",
-          },
-        ],
+        allOf: [{ $ref: "#/components/schemas/PaginatedList" }],
         properties: {
           data: {
             type: "array",
-            items: {
-              $ref: "#/components/schemas/Comment",
-            },
+            items: { $ref: "#/components/schemas/Comment" },
           },
         },
       },
@@ -345,14 +199,9 @@ export default {
         required: true,
         description:
           "The JavaScript or TypeScript expression to be evaluated.\nThis should be a single expression, like a single function\ncall, assignment operation, or calculation. If you need\nto execute multiple expressions, wrap them in a function.\n",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
         examples: {
-          simpleAddition: {
-            value: "1+1",
-            summary: "Simple addition",
-          },
+          simpleAddition: { value: "1+1", summary: "Simple addition" },
           functionCall: {
             value: "@stevekrouse.addOne(@stevekrouse.example1)",
             summary: "Calling a user's val function",
@@ -364,14 +213,9 @@ export default {
         in: "path",
         required: true,
         description: "id of the user",
-        schema: {
-          type: "string",
-          format: "uuid",
-        },
+        schema: { type: "string", format: "uuid" },
         examples: {
-          stevekrouse: {
-            value: "a0bf3b31-15a5-4d5c-880e-4b1e22c9bc18",
-          },
+          stevekrouse: { value: "a0bf3b31-15a5-4d5c-880e-4b1e22c9bc18" },
         },
       },
       username: {
@@ -380,9 +224,7 @@ export default {
         required: true,
         description:
           "The username of the val owner, *not* including the `@` symbol.\n",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
         examples: {
           stevekrouse: {
             value: "stevekrouse",
@@ -395,24 +237,15 @@ export default {
         in: "path",
         required: true,
         description: "id of the val",
-        schema: {
-          type: "string",
-          format: "uuid",
-        },
-        examples: {
-          hello: {
-            value: "eb4a2ace-b6c8-4393-85e0-4813b3f04e12",
-          },
-        },
+        schema: { type: "string", format: "uuid" },
+        examples: { hello: { value: "eb4a2ace-b6c8-4393-85e0-4813b3f04e12" } },
       },
       val_name: {
         name: "val_name",
         in: "path",
         required: true,
         description: "The name of the val.",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
         examples: {
           id: {
             value: "id",
@@ -427,113 +260,67 @@ export default {
         in: "path",
         required: true,
         description: "val version",
-        schema: {
-          type: "number",
-        },
+        schema: { type: "number" },
       },
       run_id: {
         name: "run_id",
         in: "path",
         required: true,
         description: "id of the log",
-        schema: {
-          type: "string",
-          format: "uuid",
-        },
-        examples: {
-          hello: {
-            value: "cd0653ac-aede-4d0d-8c8e-21c7ef763eb2",
-          },
-        },
+        schema: { type: "string", format: "uuid" },
+        examples: { hello: { value: "cd0653ac-aede-4d0d-8c8e-21c7ef763eb2" } },
       },
       offset: {
         name: "offset",
         in: "query",
         description: "Pagination offset",
-        schema: {
-          type: "integer",
-          default: 0,
-          minimum: 0,
-        },
+        schema: { type: "integer", default: 0, minimum: 0 },
       },
       limit: {
         name: "limit",
         in: "query",
         description: "Pagination limit",
-        schema: {
-          type: "integer",
-          default: 20,
-          minimum: 1,
-          maximum: 100,
-        },
+        schema: { type: "integer", default: 20, minimum: 1, maximum: 100 },
       },
       comments_since: {
         name: "since",
         in: "query",
         description: "Return runs where `createdAt > since` (non-inclusive)",
-        schema: {
-          type: "string",
-        },
-        examples: {
-          isostring: {
-            $ref: "#/components/examples/isostring",
-          },
-        },
+        schema: { type: "string" },
+        examples: { isostring: { $ref: "#/components/examples/isostring" } },
       },
       comments_until: {
         name: "until",
         in: "query",
         description: "Return runs where `createdAt <= until` (inclusive)",
-        schema: {
-          type: "string",
-        },
-        examples: {
-          isostring: {
-            $ref: "#/components/examples/isostring",
-          },
-        },
+        schema: { type: "string" },
+        examples: { isostring: { $ref: "#/components/examples/isostring" } },
       },
       relationship: {
         name: "relationship",
         in: "query",
-        schema: {
-          $ref: "#/components/schemas/Relationship",
-        },
+        schema: { $ref: "#/components/schemas/Relationship" },
       },
       runs_since: {
         name: "since",
         in: "query",
         description: "Return runs where `runStartAt > since` (non-inclusive)",
-        schema: {
-          type: "string",
-        },
-        examples: {
-          isostring: {
-            $ref: "#/components/examples/isostring",
-          },
-        },
+        schema: { type: "string" },
+        examples: { isostring: { $ref: "#/components/examples/isostring" } },
       },
       runs_until: {
         name: "until",
         in: "query",
         description: "Return runs where `runStartAt <= until` (inclusive)",
-        schema: {
-          type: "string",
-        },
-        examples: {
-          isostring: {
-            $ref: "#/components/examples/isostring",
-          },
-        },
+        schema: { type: "string" },
+        examples: { isostring: { $ref: "#/components/examples/isostring" } },
       },
       runs_source: {
         name: "source",
         in: "query",
         description:
           "Only return runs that were triggered by one of the specified sources. It accepts a single source (`ui`) or multiple sources joined by commas (`api,email`). The available sources are: ui, api, interval, email",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
         examples: {
           one_source: {
             value: "ui",
@@ -551,9 +338,7 @@ export default {
         in: "query",
         description:
           "Filter by whether a run had an error. \\ true - Returns runs that resulted in an error \\ false - Returns runs that succeeded \\ omit the query param to return any run",
-        schema: {
-          type: "boolean",
-        },
+        schema: { type: "boolean" },
       },
     },
     examples: {
@@ -580,10 +365,7 @@ export default {
           runStartAt: "2023-07-12T15:22:01.000Z",
           runEndAt: "2023-07-12T15:22:02.000Z",
           logs: [],
-          output: {
-            type: "string",
-            value: "Hello World",
-          },
+          output: { type: "string", value: "Hello World" },
           error: null,
           readme: "# Hello",
           likeCount: 0,
@@ -604,20 +386,14 @@ export default {
           runStartAt: "2023-07-12T15:23:01.000Z",
           runEndAt: "2023-07-12T15:23:02.000Z",
           logs: [],
-          output: {
-            type: "string",
-            value: "Hello World 2",
-          },
+          output: { type: "string", value: "Hello World 2" },
           error: null,
           readme: "# Hello",
           likeCount: 0,
           referenceCount: 0,
         },
       },
-      isostring: {
-        value: "2023-07-26T03:28:00.000Z",
-        summary: "ISO String",
-      },
+      isostring: { value: "2023-07-26T03:28:00.000Z", summary: "ISO String" },
     },
     responses: {
       ExpressionResult: {
@@ -627,45 +403,23 @@ export default {
           "application/json": {
             schema: {
               oneOf: [
-                {
-                  type: "string",
-                },
-                {
-                  type: "number",
-                },
-                {
-                  type: "object",
-                },
-                {
-                  type: "array",
-                  items: {},
-                },
-                {
-                  type: "boolean",
-                },
+                { type: "string" },
+                { type: "number" },
+                { type: "object" },
+                { type: "array", items: {} },
+                { type: "boolean" },
               ],
             },
             examples: {
-              simpleAddition: {
-                value: 2,
-                summary: "Simple addition result",
-              },
-              functionCall: {
-                value: 42,
-                summary: "Calling a function result",
-              },
+              simpleAddition: { value: 2, summary: "Simple addition result" },
+              functionCall: { value: 42, summary: "Calling a function result" },
             },
           },
         },
       },
     },
   },
-  security: [
-    {
-      bearerAuth: [],
-    },
-    {},
-  ],
+  security: [{ bearerAuth: [] }, {}],
   paths: {
     "/v1/me": {
       get: {
@@ -676,9 +430,7 @@ export default {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/User",
-                },
+                schema: { $ref: "#/components/schemas/User" },
                 examples: {
                   stevekrouse: {
                     $ref: "#/components/examples/user_stevekrouse",
@@ -687,9 +439,7 @@ export default {
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -698,39 +448,23 @@ export default {
         summary: "Get runs by the current user",
         tags: ["Me"],
         parameters: [
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
-          {
-            $ref: "#/components/parameters/runs_since",
-          },
-          {
-            $ref: "#/components/parameters/runs_until",
-          },
-          {
-            $ref: "#/components/parameters/runs_source",
-          },
-          {
-            $ref: "#/components/parameters/runs_error",
-          },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
+          { $ref: "#/components/parameters/runs_since" },
+          { $ref: "#/components/parameters/runs_until" },
+          { $ref: "#/components/parameters/runs_source" },
+          { $ref: "#/components/parameters/runs_error" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/RunList",
-                },
+                schema: { $ref: "#/components/schemas/RunList" },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -739,27 +473,19 @@ export default {
         summary: "Get vals liked by the current user",
         tags: ["Me"],
         parameters: [
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ValList",
-                },
+                schema: { $ref: "#/components/schemas/ValList" },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -769,36 +495,22 @@ export default {
           "Get comments related to current user, either given or received",
         tags: ["Me"],
         parameters: [
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
-          {
-            $ref: "#/components/parameters/comments_since",
-          },
-          {
-            $ref: "#/components/parameters/comments_until",
-          },
-          {
-            $ref: "#/components/parameters/relationship",
-          },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
+          { $ref: "#/components/parameters/comments_since" },
+          { $ref: "#/components/parameters/comments_until" },
+          { $ref: "#/components/parameters/relationship" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/CommentList",
-                },
+                schema: { $ref: "#/components/schemas/CommentList" },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -811,46 +523,22 @@ export default {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                $ref: "#/components/schemas/ValInput",
-              },
+              schema: { $ref: "#/components/schemas/ValInput" },
               examples: {
-                increment: {
-                  value: {
-                    code: 'let hello = "Hello World";',
-                  },
-                },
+                increment: { value: { code: 'let hello = "Hello World";' } },
               },
             },
             "text/plain": {
-              schema: {
-                type: "string",
-              },
-              examples: {
-                increment: {
-                  value: 'let hello = "Hello World";',
-                },
-              },
+              schema: { type: "string" },
+              examples: { increment: { value: 'let hello = "Hello World";' } },
             },
             "text/javascript": {
-              schema: {
-                type: "string",
-              },
-              examples: {
-                increment: {
-                  value: 'let hello = "Hello World";',
-                },
-              },
+              schema: { type: "string" },
+              examples: { increment: { value: 'let hello = "Hello World";' } },
             },
             "application/javascript": {
-              schema: {
-                type: "string",
-              },
-              examples: {
-                increment: {
-                  value: 'let hello = "Hello World";',
-                },
-              },
+              schema: { type: "string" },
+              examples: { increment: { value: 'let hello = "Hello World";' } },
             },
           },
         },
@@ -859,20 +547,14 @@ export default {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/FullVal",
-                },
+                schema: { $ref: "#/components/schemas/FullVal" },
                 examples: {
-                  hello: {
-                    $ref: "#/components/examples/val_hello",
-                  },
+                  hello: { $ref: "#/components/examples/val_hello" },
                 },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -880,100 +562,60 @@ export default {
       get: {
         summary: "Get val by id",
         tags: ["Vals"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/val_id",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/val_id" }],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/FullVal",
-                },
+                schema: { $ref: "#/components/schemas/FullVal" },
                 examples: {
-                  hello: {
-                    $ref: "#/components/examples/val_hello",
-                  },
+                  hello: { $ref: "#/components/examples/val_hello" },
                 },
               },
             },
           },
-          "404": {
-            description: "Val not found",
-          },
+          "404": { description: "Val not found" },
         },
       },
       delete: {
         summary: "Delete a val",
         tags: ["Vals"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/val_id",
-          },
-        ],
-        responses: {
-          "204": {
-            description: "No Content",
-          },
-        },
+        parameters: [{ $ref: "#/components/parameters/val_id" }],
+        responses: { "204": { description: "No Content" } },
       },
     },
     "/v1/vals/{val_id}/versions": {
       post: {
         summary: "Create a new version of a val",
         tags: ["Vals"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/val_id",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/val_id" }],
         requestBody: {
           description: "Code of the new version to be run.",
           required: true,
           content: {
             "application/json": {
-              schema: {
-                $ref: "#/components/schemas/ValInput",
-              },
+              schema: { $ref: "#/components/schemas/ValInput" },
               examples: {
-                increment: {
-                  value: {
-                    code: 'let hello = "Hello World 2";',
-                  },
-                },
+                increment: { value: { code: 'let hello = "Hello World 2";' } },
               },
             },
             "text/plain": {
-              schema: {
-                type: "string",
-              },
+              schema: { type: "string" },
               examples: {
-                increment: {
-                  value: 'let hello = "Hello World 2";',
-                },
+                increment: { value: 'let hello = "Hello World 2";' },
               },
             },
             "text/javascript": {
-              schema: {
-                type: "string",
-              },
+              schema: { type: "string" },
               examples: {
-                increment: {
-                  value: 'let hello = "Hello World 2";',
-                },
+                increment: { value: 'let hello = "Hello World 2";' },
               },
             },
             "application/javascript": {
-              schema: {
-                type: "string",
-              },
+              schema: { type: "string" },
               examples: {
-                increment: {
-                  value: 'let hello = "Hello World 2";',
-                },
+                increment: { value: 'let hello = "Hello World 2";' },
               },
             },
           },
@@ -983,20 +625,14 @@ export default {
             description: "Created",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/FullVal",
-                },
+                schema: { $ref: "#/components/schemas/FullVal" },
                 examples: {
-                  hello: {
-                    $ref: "#/components/examples/val_hello_v1",
-                  },
+                  hello: { $ref: "#/components/examples/val_hello_v1" },
                 },
               },
             },
           },
-          "404": {
-            description: "Val not found",
-          },
+          "404": { description: "Val not found" },
         },
       },
     },
@@ -1005,18 +641,10 @@ export default {
         summary: "Delete a val version",
         tags: ["Vals"],
         parameters: [
-          {
-            $ref: "#/components/parameters/val_id",
-          },
-          {
-            $ref: "#/components/parameters/version",
-          },
+          { $ref: "#/components/parameters/val_id" },
+          { $ref: "#/components/parameters/version" },
         ],
-        responses: {
-          "204": {
-            description: "No Content",
-          },
-        },
+        responses: { "204": { description: "No Content" } },
       },
     },
     "/v1/vals/{val_id}/runs": {
@@ -1024,42 +652,24 @@ export default {
         summary: "Get runs of a val",
         tags: ["Vals"],
         parameters: [
-          {
-            $ref: "#/components/parameters/val_id",
-          },
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
-          {
-            $ref: "#/components/parameters/runs_since",
-          },
-          {
-            $ref: "#/components/parameters/runs_until",
-          },
-          {
-            $ref: "#/components/parameters/runs_source",
-          },
-          {
-            $ref: "#/components/parameters/runs_error",
-          },
+          { $ref: "#/components/parameters/val_id" },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
+          { $ref: "#/components/parameters/runs_since" },
+          { $ref: "#/components/parameters/runs_until" },
+          { $ref: "#/components/parameters/runs_source" },
+          { $ref: "#/components/parameters/runs_error" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/RunList",
-                },
+                schema: { $ref: "#/components/schemas/RunList" },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
+          "401": { description: "Unauthorized" },
         },
       },
     },
@@ -1067,19 +677,13 @@ export default {
       get: {
         summary: "Get profile information",
         tags: ["Users"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/user_id",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/user_id" }],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/User",
-                },
+                schema: { $ref: "#/components/schemas/User" },
                 examples: {
                   stevekrouse: {
                     $ref: "#/components/examples/user_stevekrouse",
@@ -1088,9 +692,7 @@ export default {
               },
             },
           },
-          "404": {
-            description: "Not found",
-          },
+          "404": { description: "Not found" },
         },
       },
     },
@@ -1099,24 +701,16 @@ export default {
         summary: "List a user's vals",
         tags: ["Users"],
         parameters: [
-          {
-            $ref: "#/components/parameters/user_id",
-          },
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
+          { $ref: "#/components/parameters/user_id" },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ValList",
-                },
+                schema: { $ref: "#/components/schemas/ValList" },
               },
             },
           },
@@ -1127,28 +721,18 @@ export default {
       get: {
         summary: "Get val run by id",
         tags: ["Runs"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/run_id",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/run_id" }],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/FullRun",
-                },
+                schema: { $ref: "#/components/schemas/FullRun" },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
-          },
-          "404": {
-            description: "Not found",
-          },
+          "401": { description: "Unauthorized" },
+          "404": { description: "Not found" },
         },
       },
     },
@@ -1156,19 +740,13 @@ export default {
       get: {
         summary: "Get a user profile information by their username",
         tags: ["Alias"],
-        parameters: [
-          {
-            $ref: "#/components/parameters/username",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/username" }],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/User",
-                },
+                schema: { $ref: "#/components/schemas/User" },
                 examples: {
                   stevekrouse: {
                     $ref: "#/components/examples/user_stevekrouse",
@@ -1177,9 +755,7 @@ export default {
               },
             },
           },
-          "404": {
-            description: "Not found",
-          },
+          "404": { description: "Not found" },
         },
       },
     },
@@ -1188,27 +764,19 @@ export default {
         summary: "Get a val by the author's username and val name",
         tags: ["Alias"],
         parameters: [
-          {
-            $ref: "#/components/parameters/username",
-          },
-          {
-            $ref: "#/components/parameters/val_name",
-          },
+          { $ref: "#/components/parameters/username" },
+          { $ref: "#/components/parameters/val_name" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/FullVal",
-                },
+                schema: { $ref: "#/components/schemas/FullVal" },
               },
             },
           },
-          "404": {
-            description: "Not found",
-          },
+          "404": { description: "Not found" },
         },
       },
     },
@@ -1222,27 +790,17 @@ export default {
             in: "query",
             description: "Search query",
             required: true,
-            schema: {
-              type: "string",
-              minLength: 1,
-              maxLength: 512,
-            },
+            schema: { type: "string", minLength: 1, maxLength: 512 },
           },
-          {
-            $ref: "#/components/parameters/offset",
-          },
-          {
-            $ref: "#/components/parameters/limit",
-          },
+          { $ref: "#/components/parameters/offset" },
+          { $ref: "#/components/parameters/limit" },
         ],
         responses: {
           "200": {
             description: "OK",
             content: {
               "application/json": {
-                schema: {
-                  $ref: "#/components/schemas/ValList",
-                },
+                schema: { $ref: "#/components/schemas/ValList" },
               },
             },
           },
@@ -1255,27 +813,13 @@ export default {
         tags: ["Eval"],
         description:
           "Evaluates the JavaScript or TypeScript `{expression}` and responds with the returned result. \n\n### Unauthenticated\nUnauthenticated use will have read-only access to public vals. \n\n### Authenticated\nAuthenticated use will have read access to the authenticated user's private vals and secrets, write access to the authenticated user's vals, and the ability to send the authenticated user emails via `console.email`.\n\nVals generated via this API will *not* appear in the authenticated user's workspace.\n",
-        parameters: [
-          {
-            $ref: "#/components/parameters/expression",
-          },
-        ],
+        parameters: [{ $ref: "#/components/parameters/expression" }],
         responses: {
-          "200": {
-            $ref: "#/components/responses/ExpressionResult",
-          },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user expression",
-          },
+          "200": { $ref: "#/components/responses/ExpressionResult" },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user expression" },
         },
       },
     },
@@ -1295,44 +839,27 @@ export default {
                 type: "object",
                 required: ["code"],
                 properties: {
-                  code: {
-                    type: "string",
-                  },
+                  code: { type: "string" },
                   args: {
                     type: "array",
-                    items: {
-                      $ref: "#/components/schemas/JSON",
-                    },
+                    items: { $ref: "#/components/schemas/JSON" },
                   },
                 },
               },
               examples: {
                 "Add two numbers": {
-                  value: {
-                    code: "(a, b) => a + b",
-                    args: [1, 42],
-                  },
+                  value: { code: "(a, b) => a + b", args: [1, 42] },
                 },
               },
             },
           },
         },
         responses: {
-          "200": {
-            $ref: "#/components/responses/ExpressionResult",
-          },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user expression",
-          },
+          "200": { $ref: "#/components/responses/ExpressionResult" },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user expression" },
         },
       },
     },
@@ -1343,18 +870,12 @@ export default {
         description:
           "This endpoint runs the specified user's val and returns the output.",
         parameters: [
-          {
-            $ref: "#/components/parameters/username",
-          },
-          {
-            $ref: "#/components/parameters/val_name",
-          },
+          { $ref: "#/components/parameters/username" },
+          { $ref: "#/components/parameters/val_name" },
           {
             in: "query",
             name: "args",
-            schema: {
-              type: "string",
-            },
+            schema: { type: "string" },
             description:
               "The args query parameter can provide arguments to the given val. The parameter needs to be a JSON-encoded array, in which each item in the array is passed to the val as a function parameter.",
             examples: {
@@ -1362,40 +883,24 @@ export default {
                 value: '["Steve"]',
                 summary: "Calling a function with a single string argument",
               },
-              empty: {
-                value: "",
-              },
+              empty: { value: "" },
             },
           },
         ],
         responses: {
-          "200": {
-            $ref: "#/components/responses/ExpressionResult",
-          },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user expression",
-          },
+          "200": { $ref: "#/components/responses/ExpressionResult" },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user expression" },
         },
       },
       post: {
         summary: "Run a val as an API",
         tags: ["Run"],
         parameters: [
-          {
-            $ref: "#/components/parameters/username",
-          },
-          {
-            $ref: "#/components/parameters/val_name",
-          },
+          { $ref: "#/components/parameters/username" },
+          { $ref: "#/components/parameters/val_name" },
         ],
         requestBody: {
           required: false,
@@ -1409,9 +914,7 @@ export default {
                 properties: {
                   args: {
                     type: "array",
-                    items: {
-                      $ref: "#/components/schemas/JSON",
-                    },
+                    items: { $ref: "#/components/schemas/JSON" },
                   },
                 },
               },
@@ -1419,21 +922,11 @@ export default {
           },
         },
         responses: {
-          "200": {
-            $ref: "#/components/responses/ExpressionResult",
-          },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user expression",
-          },
+          "200": { $ref: "#/components/responses/ExpressionResult" },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user expression" },
         },
       },
     },
@@ -1443,12 +936,8 @@ export default {
           url: "https://{username}-{val_name}.express.val.run",
           description: "Val Town API v1",
           variables: {
-            username: {
-              default: "stevekrouse",
-            },
-            val: {
-              default: "expressHTMLExample",
-            },
+            username: { default: "stevekrouse" },
+            val: { default: "expressHTMLExample" },
           },
         },
       ],
@@ -1470,18 +959,10 @@ export default {
               },
             },
           },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user code",
-          },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user code" },
         },
       },
       post: {
@@ -1495,9 +976,7 @@ export default {
           required: false,
           content: {
             "application/json": {
-              schema: {
-                $ref: "#/components/schemas/JSON",
-              },
+              schema: { $ref: "#/components/schemas/JSON" },
               examples: {
                 name: {
                   value: '{"name": "Steve"}',
@@ -1520,18 +999,10 @@ export default {
               },
             },
           },
-          "400": {
-            description: "Bad request",
-          },
-          "404": {
-            description: "Not found",
-          },
-          "500": {
-            description: "Internal server error",
-          },
-          "502": {
-            description: "Error thrown executing user code",
-          },
+          "400": { description: "Bad request" },
+          "404": { description: "Not found" },
+          "500": { description: "Internal server error" },
+          "502": { description: "Error thrown executing user code" },
         },
       },
     },
