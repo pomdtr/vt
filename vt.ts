@@ -246,6 +246,10 @@ rootCmd
     console.log(JSON.stringify(body, null, 2));
   });
 
+rootCmd.command("openapi").action(() => {
+  open("https://www.val.town/docs/openapi.html");
+});
+
 rootCmd
   .command("token")
   .hidden()
