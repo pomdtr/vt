@@ -6,6 +6,7 @@ import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 import * as shlex from "npm:shlex";
 import { apiRoot, client } from "./client.ts";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
+import { readAllSync } from "https://deno.land/std@0.198.0/streams/read_all.ts";
 
 export function splitVal(val: string) {
   if (val.startsWith("@")) {
@@ -77,6 +78,31 @@ rootCmd
   .action(async ({ token }, val, ...args) => {
     const { author, name } = splitVal(val);
 
+    let runArgs: string[] | null = null;
+    if (!Deno.isatty(Deno.stdin.rid)) {
+      const buffer = readAllSync(Deno.stdin);
+      const content = new TextDecoder().decode(buffer);
+      if (content) {
+        if (args.length > 0) {
+          console.error(
+            "val input cannot be passed both through stdin and args"
+          );
+          Deno.exit(1);
+        }
+        runArgs = JSON.parse(content);
+      }
+    }
+
+    if (!runArgs) {
+      runArgs = args.map((arg) => {
+        try {
+          return JSON.parse(arg);
+        } catch {
+          return arg;
+        }
+      });
+    }
+
     const resp = await client["/v1/run/{username}.{val_name}"].post({
       // @ts-ignore: path params extraction is broken
       params: {
@@ -87,18 +113,13 @@ rootCmd
         Authorization: `Bearer ${token}`,
       },
       json: {
-        args: args.map((arg) => {
-          try {
-            return JSON.parse(arg);
-          } catch {
-            return arg;
-          }
-        }),
+        args: runArgs,
       },
     });
 
     if (resp.status !== 200) {
-      console.error(resp.body);
+      const res = await resp.json();
+      console.error(res);
       Deno.exit(1);
     }
 
