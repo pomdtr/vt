@@ -1,0 +1,5 @@
+{
+    "tasks": {
+        "openapi": "curl https://pomdtr-valtownOpenAPI.web.val.run > openapi.ts"
+    }
+}

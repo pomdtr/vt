@@ -1,5 +1,5 @@
 import { createClient, type NormalizeOAS } from "npm:fets";
-import openapi from "https://pomdtr-valtownOpenAPI.web.val.run";
+import openapi from "./openapi.ts";
 
 export const apiRoot = openapi.servers[0].url;
 
