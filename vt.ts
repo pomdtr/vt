@@ -170,21 +170,17 @@ rootCmd
   });
 
 rootCmd
-  .command("open")
-  .description("Open a val in the system browser.")
-  .arguments("<val:string>")
-  .action(async (_, val) => {
-    const { author, name } = splitVal(val);
-
-    await open(`https://val.town/v/${author}.${name}`);
-  });
-
-rootCmd
   .command("view")
   .description("View val code.")
+  .option("-w, --web", "View in browser")
   .arguments("<val:string>")
-  .action(async ({ token }, val) => {
+  .action(async ({ token, web }, val) => {
     const { author, name } = splitVal(val);
+    if (web) {
+      open(`https://val.town/v/${author}.${name}`);
+      Deno.exit(0);
+    }
+
     const resp = await client["/v1/alias/{username}/{val_name}"].get({
       params: {
         username: author,
