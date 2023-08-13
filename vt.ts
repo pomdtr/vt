@@ -202,6 +202,7 @@ rootCmd
 
 rootCmd
   .command("search")
+  .description("Search vals")
   .arguments("<query:string>")
   .action(async ({ token }, query) => {
     const resp = await client["/v1/search/vals"].get({
@@ -263,9 +264,25 @@ rootCmd
     console.log(JSON.stringify(body, null, 2));
   });
 
-rootCmd.command("openapi").action(() => {
-  open("https://www.val.town/docs/openapi.html");
-});
+rootCmd
+  .command("openapi")
+  .description("View openapi specs")
+  .hidden()
+  .option("--web, -w", "Open in browser")
+  .action(async ({ web }) => {
+    if (web) {
+      open("https://www.val.town/docs/openapi.html");
+      Deno.exit(0);
+    }
+
+    const resp = await fetch("https://www.val.town/docs/openapi.yaml");
+    if (resp.status != 200) {
+      console.error(resp.statusText);
+      Deno.exit(1);
+    }
+
+    console.log(await resp.text());
+  });
 
 rootCmd
   .command("token")
