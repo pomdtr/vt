@@ -53,7 +53,8 @@ async function editText(text: string, extension: string) {
 
   const { code } = await command.output();
   if (code !== 0) {
-    throw new Error("exit error");
+    console.error(`editor exited with code ${code}`);
+    Deno.exit(1);
   }
 
   return Deno.readTextFile(tempfile);
@@ -84,7 +85,8 @@ rootCmd
     });
 
     if (resp.status !== 200) {
-      throw new Error(resp.statusText);
+      console.error(resp.statusText);
+      Deno.exit(1);
     }
 
     const body = await resp.json();
@@ -165,12 +167,20 @@ rootCmd
     });
 
     if (getResp.status !== 200) {
-      throw new Error();
+      console.error(getResp.statusText);
+      Deno.exit(1);
     }
 
     const { code, id: valID } = await getResp.json();
     if (!code || !valID) {
-      throw new Error("exit error");
+      console.error("invalid response");
+      Deno.exit(1);
+    }
+
+    const edited = await editText(code, "ts");
+    if (code === edited) {
+      console.log("No changes.");
+      return;
     }
 
     const updateResp = await client["/v1/vals/{val_id}/versions"].post({
@@ -180,11 +190,12 @@ rootCmd
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      json: { code: await editText(code, "ts") },
+      json: { code: edited },
     });
 
     if (updateResp.status !== 201) {
-      throw new Error();
+      console.error(updateResp.statusText);
+      Deno.exit(1);
     }
 
     console.log("Updated!");
@@ -216,7 +227,8 @@ rootCmd
     });
 
     if (resp.status != 200) {
-      throw new Error(resp.statusText);
+      console.error(resp.statusText);
+      Deno.exit(1);
     }
 
     const body = await resp.json();
@@ -264,7 +276,8 @@ rootCmd
 
     const { data } = await resp.json();
     if (!data) {
-      throw new Error("no data");
+      console.error("invalid response");
+      Deno.exit(1);
     }
     const rows = data.map((val) => {
       const name = `${val.author?.username}.${val.name}`;
@@ -304,7 +317,8 @@ rootCmd
     });
 
     if (resp.status != 200) {
-      throw new Error(resp.statusText);
+      console.error(resp.statusText);
+      Deno.exit(1);
     }
 
     printAsJSON(await resp.json());
