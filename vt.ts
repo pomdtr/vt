@@ -18,6 +18,24 @@ export function splitVal(val: string) {
   return { author, name };
 }
 
+function printCode(language: string, value: string) {
+  if (Deno.isatty(Deno.stdout.rid)) {
+    console.log(emphasize.highlight(language, value).value);
+  } else {
+    console.log(value);
+  }
+}
+
+function printAsJSON(obj: unknown) {
+  if (Deno.isatty(Deno.stdout.rid)) {
+    console.log(
+      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value
+    );
+  } else {
+    console.log(JSON.stringify(obj));
+  }
+}
+
 async function editText(text: string, extension: string) {
   const tempfile = await Deno.makeTempFile({
     suffix: `.${extension}`,
@@ -69,7 +87,9 @@ rootCmd
       throw new Error(resp.statusText);
     }
 
-    console.log(await resp.text());
+    const body = await resp.json();
+
+    printAsJSON(body);
   });
 
 rootCmd
@@ -125,7 +145,7 @@ rootCmd
     }
 
     const body = await resp.json();
-    console.log(JSON.stringify(body, null, 2));
+    printAsJSON(body);
   });
 
 rootCmd
@@ -174,10 +194,13 @@ rootCmd
   .command("view")
   .description("View val code.")
   .option("-w, --web", "View in browser")
+  .option("--readme", "View readme")
+  .option("--code", "View code")
+  .option("--json", "View as JSON")
   .arguments("<val:string>")
-  .action(async ({ token, web }, val) => {
+  .action(async (flags, val) => {
     const { author, name } = splitVal(val);
-    if (web) {
+    if (flags.web) {
       open(`https://val.town/v/${author}.${name}`);
       Deno.exit(0);
     }
@@ -188,7 +211,7 @@ rootCmd
         val_name: name,
       },
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${flags.token}`,
       },
     });
 
@@ -196,13 +219,31 @@ rootCmd
       throw new Error(resp.statusText);
     }
 
-    const { code } = await resp.json();
+    const body = await resp.json();
+
+    if (flags.json) {
+      printAsJSON(body);
+      Deno.exit(0);
+    }
+
+    const { readme, code } = body;
+
+    if (flags.readme) {
+      printCode("markdown", readme || "");
+      return;
+    }
+
+    if (flags.code) {
+      // @ts-ignore: strange fets issue
+      printCode("typescript", code);
+      return;
+    }
 
     if (Deno.isatty(Deno.stdout.rid)) {
-      // @ts-ignore: weird fets issue
-      console.log(emphasize.highlight("typescript", code).value);
+      // @ts-ignore: strange fets issue
+      printCode("typescript", code);
     } else {
-      console.log(code);
+      console.log(JSON.stringify(body));
     }
   });
 
@@ -266,8 +307,7 @@ rootCmd
       throw new Error(resp.statusText);
     }
 
-    const body = await resp.json();
-    console.log(JSON.stringify(body, null, 2));
+    printAsJSON(await resp.json());
   });
 
 rootCmd
@@ -287,7 +327,7 @@ rootCmd
       Deno.exit(1);
     }
 
-    console.log(await resp.text());
+    printCode("yaml", await resp.text());
   });
 
 rootCmd
