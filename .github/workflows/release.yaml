@@ -28,10 +28,10 @@ jobs:
       - name: Create Archive
         id: archive
         run: |
-          ARCHIVE_NAME=name=vt-${GITHUB_REF_NAME#v}-${{ matrix.target }}
+          ARCHIVE_NAME=vt-${GITHUB_REF_NAME#v}-${{ matrix.target }}
           if [[ ${{ matrix.target }} == 'x86_64-pc-windows-msvc' ]]; then
             zip "${ARCHIVE_NAME}.zip" vt.exe LICENSE README.md
-            echo "${ARCHIVE_NAME}.zip" >> "$GITHUB_OUTPUT"
+            echo "name=${ARCHIVE_NAME}.zip" >> "$GITHUB_OUTPUT"
           else
             tar zcvf "${ARCHIVE_NAME}.tar.gz" vt LICENSE README.md
             echo "name=${ARCHIVE_NAME}.tar.gz" >> $GITHUB_OUTPUT
