@@ -5,6 +5,7 @@ import {
 import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 import * as shlex from "npm:shlex";
 import { apiRoot, client } from "./client.ts";
+import { emphasize } from "npm:emphasize";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
 import { readAllSync } from "https://deno.land/std@0.198.0/streams/read_all.ts";
 
@@ -197,12 +198,17 @@ rootCmd
 
     const { code } = await resp.json();
 
-    console.log(code);
+    if (Deno.isatty(Deno.stdout.rid)) {
+      // @ts-ignore: weird fets issue
+      console.log(emphasize.highlight("typescript", code).value);
+    } else {
+      console.log(code);
+    }
   });
 
 rootCmd
   .command("search")
-  .description("Search vals")
+  .description("Search vals.")
   .arguments("<query:string>")
   .action(async ({ token }, query) => {
     const resp = await client["/v1/search/vals"].get({
@@ -291,6 +297,6 @@ rootCmd
     console.log(token);
   });
 
-rootCmd.command("completions", new CompletionsCommand()).hidden();
+rootCmd.command("completions", new CompletionsCommand());
 
 await rootCmd.parse();
