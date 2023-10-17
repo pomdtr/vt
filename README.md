@@ -2,11 +2,11 @@
 
 ## Installation
 
+You will need to install [deno](https://deno.land/) first.
+
 ```bash
 deno install -A http://deno.land/x/vt_cli/vt.ts
 ```
-
-or download the binary from the [releases](https://github.com/pomdtr/vt/releases) page.
 
 ## Authentication
 

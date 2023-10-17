@@ -1,7 +1,7 @@
 import {
   Command,
   CompletionsCommand,
-} from "https://deno.land/x/cliffy@v1.0.0-rc.2/command/mod.ts";
+} from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
 import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 import * as shlex from "npm:shlex";
 import { apiRoot, client } from "./client.ts";
@@ -29,7 +29,7 @@ function printCode(language: string, value: string) {
 function printAsJSON(obj: unknown) {
   if (Deno.isatty(Deno.stdout.rid)) {
     console.log(
-      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value
+      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );
   } else {
     console.log(JSON.stringify(obj));
@@ -108,7 +108,7 @@ rootCmd
       if (content) {
         if (args.length > 0) {
           console.error(
-            "val input cannot be passed both through stdin and args"
+            "val input cannot be passed both through stdin and args",
           );
           Deno.exit(1);
         }

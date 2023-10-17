@@ -1,5 +1,5 @@
 {
     "tasks": {
-        "openapi": "curl https://pomdtr-valtownOpenAPI.web.val.run > openapi.ts"
+        "openapi": "deno run --allow-net refresh.ts > openapi.ts"
     }
 }
