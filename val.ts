@@ -28,8 +28,12 @@ export const valCmd = new Command()
 valCmd
   .command("edit")
   .description("Edit a val in the system editor.")
+  .option("--privacy <privacy:string>", "Privacy of the val", {
+    standalone: true,
+  })
+  .option("--name <name:string>", "Name of the val", { standalone: true })
   .arguments("<val:string>")
-  .action(async (_, val) => {
+  .action(async (options, val) => {
     const { author, name } = splitVal(val);
     const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
 
@@ -38,7 +42,35 @@ valCmd
       Deno.exit(1);
     }
 
-    const { code, id: valID } = await getResp.json();
+    const { code, id: valID, privacy } = await getResp.json();
+
+    if (options.privacy || options.name) {
+      if (privacy === options.privacy) {
+        console.error("No privacy changes.");
+        return;
+      }
+
+      if (name === options.name) {
+        console.error("No name changes.");
+        return;
+      }
+
+      const resp = await fetchValTown(`/v1/vals/${valID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ privacy: options.privacy, name: options.name }),
+      });
+
+      if (!resp.ok) {
+        console.error(await resp.json());
+        Deno.exit(1);
+      }
+
+      console.log("Updated!");
+      return;
+    }
 
     const edited = await editText(code, "ts");
     if (code === edited) {

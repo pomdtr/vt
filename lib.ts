@@ -10,8 +10,8 @@ export function fetchValTown(path: string, init?: RequestInit) {
   return fetch(`https://api.val.town${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${valtownToken}`,
       ...init?.headers,
+      Authorization: `Bearer ${valtownToken}`,
     },
   });
 }
