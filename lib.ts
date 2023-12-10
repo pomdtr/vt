@@ -1,9 +1,10 @@
 import * as shlex from "npm:shlex";
 import { emphasize } from "npm:emphasize@6.0.0";
 
-export const valtownToken = Deno.env.get("VALTOWN_TOKEN");
+export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
-  throw new Error("VALTOWN_TOKEN not set");
+  console.error("VALTOWN_TOKEN is required");
+  Deno.exit(1);
 }
 
 export function fetchValTown(path: string, init?: RequestInit) {

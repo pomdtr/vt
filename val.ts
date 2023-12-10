@@ -172,15 +172,45 @@ valCmd
   });
 
 valCmd
+  .command("run")
+  .description("Run a script val.")
+  .arguments("<val:string>")
+  .action((_, slug) => {
+    const { author, name } = splitVal(slug);
+    const { success } = new Deno.Command("deno", {
+      args: [
+        "run",
+        "--allow-env",
+        "--allow-net",
+        "--reload",
+        `https://esm.town/v/${author}/${name}`,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+      env: {
+        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
+        valtown: valtownToken,
+      },
+    }).outputSync();
+
+    if (!success) {
+      Deno.exit(1);
+    }
+  });
+
+valCmd
   .command("serve")
-  .description("Serve a val.")
+  .description("Serve an http val.")
   .option("-p, --port <port:number>", "Port to serve on", { default: 8080 })
   .option("-h, --hostname <host:string>", "Host to serve on", {
     default: "localhost",
   })
   .arguments("<val:string>")
-  .action(async (options, val) => {
-    const script = await valScript(val, options);
+  .action(async (options, slug) => {
+    const { author, name } = splitVal(slug);
+    const esmUrl = `https://esm.town/v/${author}/${name}`;
+    const script = await serveScript(esmUrl, options);
     const tempfile = await Deno.makeTempFile({
       suffix: ".ts",
     });
@@ -192,6 +222,7 @@ valCmd
       stderr: "inherit",
       env: {
         DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
+        valtown: valtownToken,
       },
     }).outputSync();
 
@@ -201,12 +232,10 @@ valCmd
     }
   });
 
-async function valScript(
-  slug: string,
+async function serveScript(
+  esmUrl: string,
   options: { port: number; hostname: string }
 ) {
-  const { author, name } = splitVal(slug);
-  const esmUrl = `https://esm.town/v/${author}/${name}`;
   const exports = await import(esmUrl);
 
   if (exports.default) {
@@ -214,9 +243,9 @@ async function valScript(
   } else if (Object.keys(exports).length === 1) {
     return `import {${
       Object.keys(exports)[0]
-    }} from "https://esm.town/v/${author}/${name}";\nDeno.serve({port: ${
-      options.port
-    }, hostname: "${options.hostname}"}, ${Object.keys(exports)[0]});`;
+    }} from "${esmUrl}";\nDeno.serve({port: ${options.port}, hostname: "${
+      options.hostname
+    }"}, ${Object.keys(exports)[0]});`;
   } else {
     console.error("val must have a default export or a single named export");
     Deno.exit(1);
