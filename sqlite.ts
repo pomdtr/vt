@@ -1,6 +1,7 @@
 import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
 import { fetchValTown, printAsJSON } from "./lib.ts";
 import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.3/table/table.ts";
+import * as path from "https://deno.land/std@0.208.0/path/mod.ts";
 
 export const sqliteCmd = new Command()
   .name("sqlite")
@@ -46,11 +47,12 @@ sqliteCmd
   .action(async (options) => {
     const statements = [];
     if (options.fromCsv) {
-      if (!options.tableName) {
-        console.error("--table-name is required.");
-        Deno.exit(1);
+      let tableName = options.tableName;
+      if (!tableName) {
+        const { name } = path.parse(options.fromCsv);
+        tableName = name;
       }
-      const dump = await csvDump(options.fromCsv, options.tableName);
+      const dump = await csvDump(options.fromCsv, tableName);
       statements.push(...dump.split(";\n").slice(2, -2));
     } else {
       console.error("Only --from-csv is supported right now.");
