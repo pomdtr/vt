@@ -5,7 +5,7 @@
 You will need to install [deno](https://deno.land/) first.
 
 ```bash
-deno install -A http://deno.land/x/vt_cli/vt.ts
+deno install -Arf http://deno.land/x/vt_cli/vt.ts
 ```
 
 ## Authentication
