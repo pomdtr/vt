@@ -14,7 +14,12 @@ Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [h
 
 ![Alt text](assets/authentication.png)
 
+## Features
+
+- Manage, Edit and Serve your vals locally
+- List/Upload/Download/Delete Blobs
+- Execute sqlite queries, import csv files
+
 ## Usage
 
-- Sqlite Commands
-
+Run `vt --help` to get a list of all available commands.
