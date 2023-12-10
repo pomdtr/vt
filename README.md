@@ -16,10 +16,5 @@ Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [h
 
 ## Usage
 
-- `vt eval <expression>` : Eval an expression.
-- `vt run <val> [args...]` : Run a val.
-- `vt edit <val>` : Edit a val in the system editor.
-- `vt open <val>` : Open a val in the system browser.
-- `vt view <val>` : View val code.
-- `vt search <query>` : Search for vals.
-- `vt api <path>` : Make an API request.
+- Sqlite Commands
+

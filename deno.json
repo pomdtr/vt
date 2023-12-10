@@ -1,5 +1,0 @@
-{
-    "tasks": {
-        "openapi": "deno run --allow-net refresh.ts > openapi.ts"
-    }
-}
