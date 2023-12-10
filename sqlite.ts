@@ -43,11 +43,16 @@ sqliteCmd
   .command("import")
   .description("Import a table.")
   .option("--table-name <table:string>", "name of the table in the csv file")
-  .option("--from-csv <file>", "create the database from a csv file")
-  .option("--from-db <file>", "create the database from a sqlite file")
+  .option("--from-csv <file>", "create the database from a csv file", {
+    conflicts: ["from-db"],
+    depends: ["table-name"],
+  })
+  .option("--from-db <file>", "create the database from a sqlite file", {
+    conflicts: ["from-csv"],
+  })
   .action(async (options) => {
-    if (options.fromCsv && options.fromDb) {
-      console.error("Only one of --from-csv or --table-name can be used.");
+    if (!options.fromCsv && !options.fromDb) {
+      console.error("Either --from-csv or --from-db is required.");
       Deno.exit(1);
     }
 
@@ -84,7 +89,7 @@ sqliteCmd
     printAsJSON(await resp.json());
   });
 
-async function dbDump(dbPath: string, tableName: string) {
+function dbDump(dbPath: string, tableName: string) {
   return runSqliteScript(dbPath, `.output stdout\n.dump ${tableName}\n`);
 }
 
