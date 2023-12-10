@@ -44,7 +44,13 @@ sqliteCmd
   .description("Import a table.")
   .option("--table-name <table:string>", "name of the table in the csv file")
   .option("--from-csv <file>", "create the database from a csv file")
+  .option("--from-db <file>", "create the database from a sqlite file")
   .action(async (options) => {
+    if (options.fromCsv && options.fromDb) {
+      console.error("Only one of --from-csv or --table-name can be used.");
+      Deno.exit(1);
+    }
+
     const statements = [];
     if (options.fromCsv) {
       let tableName = options.tableName;
@@ -53,6 +59,13 @@ sqliteCmd
         tableName = name;
       }
       const dump = await csvDump(options.fromCsv, tableName);
+      statements.push(...dump.split(";\n").slice(2, -2));
+    } else if (options.fromDb) {
+      if (!options.tableName) {
+        console.error("table-name is required when importing from a db.");
+        Deno.exit(1);
+      }
+      const dump = await dbDump(options.fromDb, options.tableName);
       statements.push(...dump.split(";\n").slice(2, -2));
     } else {
       console.error("Only --from-csv is supported right now.");
@@ -70,6 +83,10 @@ sqliteCmd
 
     printAsJSON(await resp.json());
   });
+
+async function dbDump(dbPath: string, tableName: string) {
+  return runSqliteScript(dbPath, `.output stdout\n.dump ${tableName}\n`);
+}
 
 async function csvDump(csvPath: string, tableName: string) {
   const tempfile = await Deno.makeTempFile();
