@@ -57,6 +57,20 @@ blobCmd
   });
 
 blobCmd
+  .command("cat")
+  .description("Print a blob to stdout.")
+  .arguments("<key:string>")
+  .action(async (_, key) => {
+    const resp = await fetchValTown(`/v1/blob/${encodeURIComponent(key)}`);
+    if (!resp.ok) {
+      console.error(resp.statusText);
+      Deno.exit(1);
+    }
+
+    Deno.writeSync(Deno.stdout.rid, new Uint8Array(await resp.arrayBuffer()));
+  });
+
+blobCmd
   .command("upload")
   .description("Upload a blob.")
   .arguments("<path:string> <key:string>")
