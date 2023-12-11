@@ -5,7 +5,13 @@ import {
 } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
 import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
 import { valCmd } from "./val.ts";
-import { fetchValTown, printAsJSON, printCode, splitVal } from "./lib.ts";
+import {
+  fetchValTown,
+  printAsJSON,
+  printCode,
+  splitVal,
+  valtownToken,
+} from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { sqliteCmd } from "./sqlite.ts";
 import { toText } from "https://deno.land/std@0.203.0/streams/mod.ts";
@@ -52,6 +58,26 @@ rootCmd
     const body = await resp.json();
 
     printAsJSON(body);
+  });
+
+rootCmd
+  .command("repl")
+  .description("Start a REPL.")
+  .action(() => {
+    const { success } = new Deno.Command("deno", {
+      args: ["repl", "--allow-net", "--allow-env", "--reload"],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+      env: {
+        valtown: valtownToken,
+        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
+      },
+    }).outputSync();
+
+    if (!success) {
+      Deno.exit(1);
+    }
   });
 
 rootCmd
