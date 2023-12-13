@@ -65,7 +65,12 @@ rootCmd
   .description("Start a REPL.")
   .action(() => {
     const { success } = new Deno.Command("deno", {
-      args: ["repl", "--allow-net", "--allow-env", "--reload"],
+      args: [
+        "repl",
+        "--allow-net",
+        "--allow-env",
+        "--reload=https://esm.town/v/",
+      ],
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",

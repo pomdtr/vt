@@ -182,7 +182,7 @@ valCmd
         "run",
         "--allow-env",
         "--allow-net",
-        "--reload",
+        "--reload=https://esm.town/v/",
         `https://esm.town/v/${author}/${name}`,
       ],
       stdin: "inherit",
@@ -216,7 +216,13 @@ valCmd
     });
     Deno.writeTextFileSync(tempfile, script);
     const { success } = new Deno.Command("deno", {
-      args: ["run", "--allow-env", "--allow-net", "--reload", tempfile],
+      args: [
+        "run",
+        "--allow-env",
+        "--allow-net",
+        "--reload=https://esm.town/v/",
+        tempfile,
+      ],
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",
