@@ -1,3 +1,4 @@
+import { toArrayBuffer } from "https://deno.land/std@0.203.0/streams/to_array_buffer.ts";
 import { Command, Table } from "./deps.ts";
 import { fetchValTown } from "./lib.ts";
 
@@ -52,7 +53,11 @@ blobCmd
     }
 
     const blob = await resp.blob();
-    Deno.writeFileSync(path, new Uint8Array(await blob.arrayBuffer()));
+    if (path == "-") {
+      Deno.stdout.writeSync(new Uint8Array(await blob.arrayBuffer()));
+    } else {
+      Deno.writeFileSync(path, new Uint8Array(await blob.arrayBuffer()));
+    }
   });
 
 blobCmd
@@ -74,10 +79,17 @@ blobCmd
   .description("Upload a blob.")
   .arguments("<path:string> <key:string>")
   .action(async (_, path, key) => {
-    const file = await Deno.open(path);
+    let body: ReadableStream;
+    if (path === "-") {
+      body = Deno.stdin.readable;
+    } else {
+      const file = await Deno.open(path);
+      body = file.readable;
+    }
+
     const resp = await fetchValTown(`/v1/blob/${encodeURIComponent(key)}`, {
       method: "POST",
-      body: file.readable,
+      body,
     });
 
     if (!resp.ok) {
