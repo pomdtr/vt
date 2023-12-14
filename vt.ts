@@ -1,9 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import {
-  Command,
-  CompletionsCommand,
-} from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
-import { open } from "https://deno.land/x/open@v0.0.6/index.ts";
+import { Command, CompletionsCommand, toText, Table, open } from "./deps.ts";
 import { valCmd } from "./val.ts";
 import {
   fetchValTown,
@@ -13,8 +9,7 @@ import {
   valtownToken,
 } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
-import { sqliteCmd } from "./sqlite.ts";
-import { toText } from "https://deno.land/std@0.203.0/streams/mod.ts";
+import { tableCmd } from "./table.ts";
 
 const rootCmd = new Command().name("vt").action(() => {
   rootCmd.showHelp();
@@ -22,7 +17,7 @@ const rootCmd = new Command().name("vt").action(() => {
 
 rootCmd.command("val", valCmd);
 rootCmd.command("blob", blobCmd);
-rootCmd.command("sqlite", sqliteCmd);
+rootCmd.command("table", tableCmd);
 
 rootCmd
   .command("eval")
@@ -62,15 +57,23 @@ rootCmd
 
 rootCmd
   .command("repl")
+  .arguments("[val:string]")
   .description("Start a REPL.")
-  .action(() => {
+  .action((_, val) => {
+    const args = [
+      "repl",
+      "--allow-net",
+      "--allow-env",
+      "--reload=https://esm.town/v/",
+    ];
+
+    if (val) {
+      const { author, name } = splitVal(val);
+      args.push(`--eval-file=https://esm.town/v/${author}/${name}`);
+    }
+
     const { success } = new Deno.Command("deno", {
-      args: [
-        "repl",
-        "--allow-net",
-        "--allow-env",
-        "--reload=https://esm.town/v/",
-      ],
+      args,
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",
@@ -184,3 +187,32 @@ rootCmd
 rootCmd.command("completions", new CompletionsCommand());
 
 await rootCmd.parse();
+
+rootCmd
+  .command("query")
+  .description("Execute a query.")
+  .arguments("<query:string>")
+  .action(async (_, query) => {
+    const res = await fetchValTown("/v1/sqlite/execute", {
+      method: "POST",
+      body: JSON.stringify({ statement: query }),
+    });
+
+    if (!res.ok) {
+      console.error(res.statusText);
+      Deno.exit(1);
+    }
+
+    const body = (await res.json()) as {
+      columns: string[];
+      rows: string[][];
+    };
+
+    if (!Deno.isatty(Deno.stdout.rid)) {
+      console.log(body.rows.map((row) => row.join("\t")).join("\n"));
+      return;
+    }
+
+    const table = new Table(...body.rows).header(body.columns);
+    table.render();
+  });

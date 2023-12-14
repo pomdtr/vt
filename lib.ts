@@ -1,5 +1,4 @@
-import * as shlex from "npm:shlex";
-import { emphasize } from "npm:emphasize@6.0.0";
+import { shlex, emphasize } from "./deps.ts";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {

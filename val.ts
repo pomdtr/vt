@@ -1,4 +1,4 @@
-import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import { path, Table, Command } from "./deps.ts";
 import {
   valtownToken,
   editText,
@@ -7,8 +7,6 @@ import {
   printCode,
   splitVal,
 } from "./lib.ts";
-import * as path from "https://deno.land/std@0.186.0/path/mod.ts";
-import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 
 type Val = {
   name: string;

@@ -1,6 +1,5 @@
-import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import { Command, Table } from "./deps.ts";
 import { fetchValTown } from "./lib.ts";
-import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.2/table/mod.ts";
 
 export const blobCmd = new Command()
   .name("val")

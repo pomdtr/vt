@@ -1,45 +1,51 @@
-import { Command } from "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts";
+import { Command, path } from "./deps.ts";
 import { fetchValTown, printAsJSON } from "./lib.ts";
-import { Table } from "https://deno.land/x/cliffy@v1.0.0-rc.3/table/table.ts";
-import * as path from "https://deno.land/std@0.208.0/path/mod.ts";
 
-export const sqliteCmd = new Command()
-  .name("sqlite")
-  .description("Manage Sqlite Database")
+export const tableCmd = new Command()
+  .name("table")
+  .description("Manage sqlite tables.")
   .action(() => {
-    sqliteCmd.showHelp();
+    tableCmd.showHelp();
   });
-
-sqliteCmd
-  .command("exec")
-  .description("Execute a query.")
-  .arguments("<query:string>")
-  .action(async (_, query) => {
-    const res = await fetchValTown("/v1/sqlite/execute", {
+tableCmd
+  .command("list")
+  .description("List Tables")
+  .action(async () => {
+    const resp = await fetchValTown("/v1/sqlite/execute", {
       method: "POST",
-      body: JSON.stringify({ statement: query }),
+      body: JSON.stringify({ statement: "SELECT name FROM sqlite_master" }),
     });
 
-    if (!res.ok) {
-      console.error(res.statusText);
-      Deno.exit(1);
+    if (!resp.ok) {
+      throw new Error(resp.statusText);
     }
 
-    const body = (await res.json()) as {
+    const body = (await resp.json()) as {
       columns: string[];
       rows: string[][];
     };
 
-    if (!Deno.isatty(Deno.stdout.rid)) {
-      console.log(body.rows.map((row) => row.join("\t")).join("\n"));
-      return;
-    }
-
-    const table = new Table(...body.rows).header(body.columns);
-    table.render();
+    console.log(body.rows.map((row) => row[0]).join("\n"));
   });
 
-sqliteCmd
+tableCmd
+  .command("delete")
+  .description("Delete a table.")
+  .arguments("<table:string>")
+  .action(async (_, tableName) => {
+    const resp = await fetchValTown("/v1/sqlite/execute", {
+      method: "POST",
+      body: JSON.stringify({ statement: `DROP TABLE IF EXISTS ${tableName}` }),
+    });
+
+    if (!resp.ok) {
+      throw new Error(resp.statusText);
+    }
+
+    console.log("Table deleted.");
+  });
+
+tableCmd
   .command("import")
   .description("Import a table.")
   .option("--table-name <table:string>", "name of the table in the csv file")
