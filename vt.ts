@@ -138,6 +138,11 @@ rootCmd
   .action(async (_, val, ...args) => {
     const { author, name } = splitVal(val);
 
+    let stdin: string | undefined;
+    if (!Deno.isatty(Deno.stdin.rid)) {
+      stdin = await toText(Deno.stdin.readable);
+    }
+
     // prettier-ignore
     const code = `(await import("https://esm.town/v/${author}/${name}")).default`
     const resp = await fetchValTown("/v1/eval", {
@@ -148,6 +153,7 @@ rootCmd
         args: [
           {
             args,
+            stdin,
           },
         ],
       }),
