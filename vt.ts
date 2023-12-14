@@ -123,7 +123,7 @@ rootCmd
       scriptPath,
       `#!/bin/sh
 
-vt run ${val} "$@"
+exec vt run ${val} "$@"
 `
     );
     Deno.chmodSync(scriptPath, 0o755);
