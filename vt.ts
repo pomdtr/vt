@@ -1,5 +1,13 @@
 #!/usr/bin/env -S deno run -A
-import { Command, CompletionsCommand, toText, Table, open } from "./deps.ts";
+import {
+  Command,
+  CompletionsCommand,
+  toText,
+  Table,
+  open,
+  fs,
+  path,
+} from "./deps.ts";
 import { valCmd } from "./val.ts";
 import {
   fetchValTown,
@@ -89,51 +97,74 @@ rootCmd
   });
 
 rootCmd
+  .command("install")
+  .description("Install a val.")
+  .arguments("<val:string>")
+  .action((_, val) => {
+    const homeDir = Deno.env.get("HOME");
+    if (!homeDir) {
+      console.error("HOME environment variable is not set.");
+      Deno.exit(1);
+    }
+
+    const binDir = path.join(homeDir, ".local", "bin");
+    if (!fs.existsSync(binDir)) {
+      Deno.mkdirSync(binDir, { recursive: true });
+    }
+
+    const { name } = splitVal(val);
+    const scriptPath = path.join(binDir, name);
+    if (fs.existsSync(scriptPath)) {
+      console.error(`${name} already exists.`);
+      Deno.exit(1);
+    }
+
+    Deno.writeTextFileSync(
+      scriptPath,
+      `#!/bin/sh
+
+vt run ${val} "$@"
+`
+    );
+    Deno.chmodSync(scriptPath, 0o755);
+
+    console.log(`Installed ${name} to ${scriptPath}`);
+  });
+
+rootCmd
   .command("run")
   .description("Run a val.")
-  .hidden()
   .arguments("<val:string> [args...]")
   .action(async (_, val, ...args) => {
     const { author, name } = splitVal(val);
 
-    let runArgs: string[] | null = null;
-    if (!Deno.isatty(Deno.stdin.rid)) {
-      const content = await toText(Deno.stdin.readable);
-      if (content) {
-        if (args.length > 0) {
-          console.error(
-            "val input cannot be passed both through stdin and args"
-          );
-          Deno.exit(1);
-        }
-        runArgs = JSON.parse(content);
-      }
-    }
-
-    if (!runArgs) {
-      runArgs = args.map((arg) => {
-        try {
-          return JSON.parse(arg);
-        } catch {
-          return arg;
-        }
-      });
-    }
-
-    const resp = await fetchValTown(`/v1/run/${author}.${name}`, {
+    // prettier-ignore
+    const code = `(await import("https://esm.town/v/${author}/${name}")).default`
+    const resp = await fetchValTown("/v1/eval", {
+      method: "POST",
       body: JSON.stringify({
-        args: runArgs,
+        // prettier-ignore
+        code,
+        args: [
+          {
+            args,
+          },
+        ],
       }),
     });
 
-    if (resp.status !== 200) {
-      const res = await resp.json();
-      console.error(res);
+    if (!resp.ok) {
+      console.error(resp.statusText);
       Deno.exit(1);
     }
 
-    const body = await resp.json();
-    printAsJSON(body);
+    const res = JSON.parse(await resp.text());
+    if (typeof res === "string") {
+      console.log(res);
+      return;
+    }
+
+    printAsJSON(res);
   });
 
 rootCmd
@@ -186,8 +217,6 @@ rootCmd
 
 rootCmd.command("completions", new CompletionsCommand());
 
-await rootCmd.parse();
-
 rootCmd
   .command("query")
   .description("Execute a query.")
@@ -216,3 +245,5 @@ rootCmd
     const table = new Table(...body.rows).header(body.columns);
     table.render();
   });
+
+await rootCmd.parse();
