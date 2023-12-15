@@ -16,6 +16,7 @@ import {
   splitVal,
   valtownToken,
 } from "./lib.ts";
+import * as cli from "./cli.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
@@ -131,19 +132,6 @@ exec vt run ${val} "$@"
     console.log(`Installed ${name} to ${scriptPath}`);
   });
 
-type Input = {
-  stdin?: string;
-  args: string[];
-};
-
-type Output =
-  | string
-  | {
-      stdout?: string;
-      stderr?: string;
-      code?: number;
-    };
-
 rootCmd
   .command("run")
   .description("Run a val.")
@@ -151,7 +139,7 @@ rootCmd
   .action(async (_, val, ...args) => {
     const { author, name } = splitVal(val);
 
-    const input: Input = {
+    const input: cli.Input = {
       args,
     };
     if (!Deno.isatty(Deno.stdin.rid)) {
@@ -174,7 +162,7 @@ rootCmd
       Deno.exit(1);
     }
 
-    const output: Output = await resp.json();
+    const output: cli.Output = await resp.json();
     if (typeof output === "string") {
       console.log(output);
       return;
