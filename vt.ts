@@ -101,7 +101,9 @@ rootCmd
   .command("install")
   .description("Install a val.")
   .arguments("<val:string>")
-  .action((_, val) => {
+  .option("-f, --force", "Overwrite existing script.")
+  .option("-n, --name <name:string>", "Name of the script.")
+  .action((options, val) => {
     const homeDir = Deno.env.get("HOME");
     if (!homeDir) {
       console.error("HOME environment variable is not set.");
@@ -113,9 +115,9 @@ rootCmd
       Deno.mkdirSync(binDir, { recursive: true });
     }
 
-    const { name } = splitVal(val);
+    const name = options.name ? options.name : splitVal(val).name;
     const scriptPath = path.join(binDir, name);
-    if (fs.existsSync(scriptPath)) {
+    if (fs.existsSync(scriptPath) && !options.force) {
       console.error(`${name} already exists.`);
       Deno.exit(1);
     }
