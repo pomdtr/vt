@@ -137,6 +137,7 @@ exec vt run ${val} "$@"
 rootCmd
   .command("run")
   .description("Run a val.")
+  .stopEarly()
   .arguments("<val:string> [args...]")
   .action(async (_, val, ...args) => {
     const { author, name } = splitVal(val);
