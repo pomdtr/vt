@@ -1,6 +1,7 @@
 export type Input = {
-  stdin?: string;
+  name: string;
   args: string[];
+  stdin?: string;
 };
 
 export type Output =

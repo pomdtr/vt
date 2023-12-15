@@ -142,6 +142,7 @@ rootCmd
     const { author, name } = splitVal(val);
 
     const input: cli.Input = {
+      name,
       args,
     };
     if (!Deno.isatty(Deno.stdin.rid)) {
