@@ -131,6 +131,19 @@ exec vt run ${val} "$@"
     console.log(`Installed ${name} to ${scriptPath}`);
   });
 
+type Input = {
+  stdin?: string;
+  args: string[];
+};
+
+type Output =
+  | string
+  | {
+      stdout?: string;
+      stderr?: string;
+      code?: number;
+    };
+
 rootCmd
   .command("run")
   .description("Run a val.")
@@ -138,9 +151,11 @@ rootCmd
   .action(async (_, val, ...args) => {
     const { author, name } = splitVal(val);
 
-    let stdin: string | undefined;
+    const input: Input = {
+      args,
+    };
     if (!Deno.isatty(Deno.stdin.rid)) {
-      stdin = await toText(Deno.stdin.readable);
+      input.stdin = await toText(Deno.stdin.readable);
     }
 
     // prettier-ignore
@@ -150,12 +165,7 @@ rootCmd
       body: JSON.stringify({
         // prettier-ignore
         code,
-        args: [
-          {
-            args,
-            stdin,
-          },
-        ],
+        args: [input],
       }),
     });
 
@@ -164,13 +174,21 @@ rootCmd
       Deno.exit(1);
     }
 
-    const res = JSON.parse(await resp.text());
-    if (typeof res === "string") {
-      console.log(res);
+    const output: Output = await resp.json();
+    if (typeof output === "string") {
+      console.log(output);
       return;
     }
 
-    printAsJSON(res);
+    if (output.stdout) {
+      console.log(output.stdout);
+    }
+
+    if (output.stderr) {
+      console.error(output.stderr);
+    }
+
+    Deno.exit(output.code || 0);
   });
 
 rootCmd

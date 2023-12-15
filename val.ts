@@ -170,14 +170,14 @@ valCmd
   });
 
 valCmd
-  .command("run")
-  .description("Run a script val.")
+  .command("exec")
+  .description("Exec a script val.")
   .arguments("<val:string>")
   .action((_, slug) => {
     const { author, name } = splitVal(slug);
     const { success } = new Deno.Command("deno", {
       args: [
-        "run",
+        "exec",
         "--allow-env",
         "--allow-net",
         "--reload=https://esm.town/v/",
