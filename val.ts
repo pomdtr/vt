@@ -1,11 +1,11 @@
-import { path, Table, Command } from "./deps.ts";
+import { Command, path, Table } from "./deps.ts";
 import {
-  valtownToken,
   editText,
   fetchValTown,
   printAsJSON,
   printCode,
   splitVal,
+  valtownToken,
 } from "./lib.ts";
 
 type Val = {
@@ -138,7 +138,7 @@ valCmd
       // @ts-ignore: strange fets issue
       printCode("typescript", code);
     } else {
-      console.log(JSON.stringify(body));
+      console.log(code);
     }
   });
 
@@ -148,7 +148,7 @@ valCmd
   .arguments("<query:string>")
   .action(async (_, query) => {
     const resp = await fetchValTown(
-      `/v1/search/vals?query=${encodeURIComponent(query)}&limit=100`
+      `/v1/search/vals?query=${encodeURIComponent(query)}&limit=100`,
     );
     const { data } = await resp.json();
     if (!data) {
@@ -156,44 +156,16 @@ valCmd
       Deno.exit(1);
     }
     const rows = data.map((val: Val) => {
-      const name = `${val.author?.username}.${val.name}`;
+      const name = `${val.author?.username}/${val.name}`;
       const link = `https://val.town/v/${name.slice(1)}`;
       return [name, `v${val.version}`, link];
     }) as string[][];
 
     if (Deno.isatty(Deno.stdout.rid)) {
-      const table = new Table(...rows).header(["name", "version", "link"]);
+      const table = new Table(...rows).header(["slug", "version", "link"]);
       table.render();
     } else {
       console.log(rows.map((row) => row.join("\t")).join("\n"));
-    }
-  });
-
-valCmd
-  .command("exec")
-  .description("Exec a script val.")
-  .arguments("<val:string>")
-  .action((_, slug) => {
-    const { author, name } = splitVal(slug);
-    const { success } = new Deno.Command("deno", {
-      args: [
-        "exec",
-        "--allow-env",
-        "--allow-net",
-        "--reload=https://esm.town/v/",
-        `https://esm.town/v/${author}/${name}`,
-      ],
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-      env: {
-        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
-        valtown: valtownToken,
-      },
-    }).outputSync();
-
-    if (!success) {
-      Deno.exit(1);
     }
   });
 
@@ -238,7 +210,7 @@ valCmd
 
 async function serveScript(
   esmUrl: string,
-  options: { port: number; hostname: string }
+  options: { port: number; hostname: string },
 ) {
   const exports = await import(esmUrl);
 
@@ -247,9 +219,9 @@ async function serveScript(
   } else if (Object.keys(exports).length === 1) {
     return `import {${
       Object.keys(exports)[0]
-    }} from "${esmUrl}";\nDeno.serve({port: ${options.port}, hostname: "${
-      options.hostname
-    }"}, ${Object.keys(exports)[0]});`;
+    }} from "${esmUrl}";\nDeno.serve({port: ${options.port}, hostname: "${options.hostname}"}, ${
+      Object.keys(exports)[0]
+    });`;
   } else {
     console.error("val must have a default export or a single named export");
     Deno.exit(1);
@@ -365,3 +337,59 @@ valCmd
       Deno.exit(1);
     }
   });
+
+valCmd
+  .command("run")
+  .description("Run a val.")
+  .stopEarly()
+  .arguments("<val:string> [args...]")
+  .action((_, val, ...args) => {
+    const { author, name } = splitVal(val);
+
+    const { success } = new Deno.Command("deno", {
+      args: [
+        "run",
+        "--allow-all",
+        "--quiet",
+        "--reload=https://esm.town/v/",
+        `https://esm.town/v/${author}/${name}`,
+        ...args,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+      env: {
+        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
+      },
+    }).outputSync();
+
+    if (!success) {
+      Deno.exit(1);
+    }
+  });
+
+valCmd.command("install").description("Install a val.").arguments(
+  "<val:string>",
+).option("--name <name:string>", "Executable file name").action(
+  (options, val) => {
+    const { author, name } = splitVal(val);
+
+    const { success } = new Deno.Command("deno", {
+      args: [
+        "install",
+        "--allow-all",
+        "--quiet",
+        `--name=${options.name || name}`,
+        "--reload=https://esm.town/v/",
+        `https://esm.town/v/${author}/${name}`,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    }).outputSync();
+
+    if (!success) {
+      Deno.exit(1);
+    }
+  },
+);

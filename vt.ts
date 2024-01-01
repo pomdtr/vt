@@ -89,62 +89,6 @@ rootCmd
   });
 
 rootCmd
-  .command("run")
-  .description("Run a val.")
-  .stopEarly()
-  .arguments("<val:string> [args...]")
-  .action((_, val, ...args) => {
-    const { author, name } = splitVal(val);
-
-    const { success } = new Deno.Command("deno", {
-      args: [
-        "run",
-        "--allow-all",
-        "--quiet",
-        "--reload=https://esm.town/v/",
-        `https://esm.town/v/${author}/${name}`,
-        ...args,
-      ],
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-      env: {
-        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
-      },
-    }).outputSync();
-
-    if (!success) {
-      Deno.exit(1);
-    }
-  });
-
-rootCmd.command("install").description("Install a val.").arguments(
-  "<val:string>",
-).option("--name <name:string>", "Executable file name").action(
-  (options, val) => {
-    const { author, name } = splitVal(val);
-
-    const { success } = new Deno.Command("deno", {
-      args: [
-        "install",
-        "--allow-all",
-        "--quiet",
-        `--name=${options.name || name}`,
-        "--reload=https://esm.town/v/",
-        `https://esm.town/v/${author}/${name}`,
-      ],
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-    }).outputSync();
-
-    if (!success) {
-      Deno.exit(1);
-    }
-  },
-);
-
-rootCmd
   .command("api")
   .description("Make an API request.")
   .example("Get your user info", "vt api /v1/me")
