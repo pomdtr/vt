@@ -1,13 +1,5 @@
 #!/usr/bin/env -S deno run -A
-import {
-  Command,
-  CompletionsCommand,
-  toText,
-  Table,
-  open,
-  fs,
-  path,
-} from "./deps.ts";
+import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
 import { valCmd } from "./val.ts";
 import {
   fetchValTown,
@@ -16,7 +8,6 @@ import {
   splitVal,
   valtownToken,
 } from "./lib.ts";
-import * as cli from "./cli.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
@@ -34,7 +25,7 @@ rootCmd
   .arguments("[expression:string]")
   .option(
     "--args <args:string>",
-    "Arguments to pass to the expression as JSON array."
+    "Arguments to pass to the expression as JSON array.",
   )
   .action(async (options, expression) => {
     if (!expression) {
@@ -98,90 +89,60 @@ rootCmd
   });
 
 rootCmd
-  .command("install")
-  .description("Install a val.")
-  .arguments("<val:string>")
-  .option("-f, --force", "Overwrite existing script.")
-  .option("-n, --name <name:string>", "Name of the script.")
-  .action((options, val) => {
-    const homeDir = Deno.env.get("HOME");
-    if (!homeDir) {
-      console.error("HOME environment variable is not set.");
-      Deno.exit(1);
-    }
-
-    const binDir = path.join(homeDir, ".local", "bin");
-    if (!fs.existsSync(binDir)) {
-      Deno.mkdirSync(binDir, { recursive: true });
-    }
-
-    const name = options.name ? options.name : splitVal(val).name;
-    const scriptPath = path.join(binDir, name);
-    if (fs.existsSync(scriptPath) && !options.force) {
-      console.error(`${name} already exists.`);
-      Deno.exit(1);
-    }
-
-    Deno.writeTextFileSync(
-      scriptPath,
-      `#!/bin/sh
-
-exec vt run ${val} "$@"
-`
-    );
-    Deno.chmodSync(scriptPath, 0o755);
-
-    console.log(`Installed ${name} to ${scriptPath}`);
-  });
-
-rootCmd
   .command("run")
   .description("Run a val.")
   .stopEarly()
   .arguments("<val:string> [args...]")
-  .action(async (_, val, ...args) => {
+  .action((_, val, ...args) => {
     const { author, name } = splitVal(val);
 
-    const input: cli.Input = {
-      name,
-      args,
-    };
-    if (!Deno.isatty(Deno.stdin.rid)) {
-      input.stdin = await toText(Deno.stdin.readable);
-    }
+    const { success } = new Deno.Command("deno", {
+      args: [
+        "run",
+        "--allow-all",
+        "--quiet",
+        "--reload=https://esm.town/v/",
+        `https://esm.town/v/${author}/${name}`,
+        ...args,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+      env: {
+        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
+      },
+    }).outputSync();
 
-    // prettier-ignore
-    const code = `(await import("https://esm.town/v/${author}/${name}")).default`
-    const resp = await fetchValTown("/v1/eval", {
-      method: "POST",
-      body: JSON.stringify({
-        // prettier-ignore
-        code,
-        args: [input],
-      }),
-    });
-
-    if (!resp.ok) {
-      console.error(resp.statusText);
+    if (!success) {
       Deno.exit(1);
     }
-
-    const output: cli.Output = await resp.json();
-    if (typeof output === "string") {
-      console.log(output);
-      return;
-    }
-
-    if (output.stdout) {
-      console.log(output.stdout);
-    }
-
-    if (output.stderr) {
-      console.error(output.stderr);
-    }
-
-    Deno.exit(output.code || 0);
   });
+
+rootCmd.command("install").description("Install a val.").arguments(
+  "<val:string>",
+).option("--name <name:string>", "Executable file name").action(
+  (options, val) => {
+    const { author, name } = splitVal(val);
+
+    const { success } = new Deno.Command("deno", {
+      args: [
+        "install",
+        "--allow-all",
+        "--quiet",
+        `--name=${options.name || name}`,
+        "--reload=https://esm.town/v/",
+        `https://esm.town/v/${author}/${name}`,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    }).outputSync();
+
+    if (!success) {
+      Deno.exit(1);
+    }
+  },
+);
 
 rootCmd
   .command("api")
@@ -190,7 +151,8 @@ rootCmd
   .arguments("<path:string>")
   .option("-X, --method <method:string>", "HTTP method.", { default: "GET" })
   .option("-d, --data <data:string>", "Request Body")
-  .action(async ({ method, data }, path) => {
+  .option("-H, --header <header:string>", "Request Header", { collect: true })
+  .action(async ({ method, data, header }, path) => {
     if (!path.startsWith("/")) {
       path = `/${path}`;
     }
@@ -198,8 +160,15 @@ rootCmd
       path = `/v1${path}`;
     }
 
+    const headers: Record<string, string> = {};
+    for (const h of header || []) {
+      const [key, value] = h.split(":", 2);
+      headers[key.trim()] = value.trim();
+    }
+
     const resp = await fetchValTown(path, {
       method,
+      headers,
       body: data,
     });
 

@@ -1,4 +1,4 @@
-import { shlex, emphasize } from "./deps.ts";
+import { emphasize, shlex } from "./deps.ts";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
@@ -60,7 +60,7 @@ export function printCode(language: string, value: string) {
 export function printAsJSON(obj: unknown) {
   if (Deno.isatty(Deno.stdout.rid)) {
     console.log(
-      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value
+      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );
   } else {
     console.log(JSON.stringify(obj));

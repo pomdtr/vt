@@ -1,4 +1,3 @@
-import { toArrayBuffer } from "https://deno.land/std@0.203.0/streams/to_array_buffer.ts";
 import { Command, Table } from "./deps.ts";
 import { fetchValTown } from "./lib.ts";
 
