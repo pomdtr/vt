@@ -17,7 +17,7 @@ blobCmd
     const resp = await fetchValTown(
       options.prefix
         ? `/v1/blob?prefix=${encodeURIComponent(options.prefix)}`
-        : "/v1/blob"
+        : "/v1/blob",
     );
     if (!resp.ok) {
       console.error(resp.statusText);
@@ -29,7 +29,7 @@ blobCmd
       size: number;
       lastModified: string;
     }[];
-    if (!Deno.isatty(Deno.stdout.rid)) {
+    if (!Deno.stdout.isTerminal()) {
       for (const blob of blobs) {
         console.log(`${blob.key}\t${blob.size}\t${blob.lastModified}`);
       }

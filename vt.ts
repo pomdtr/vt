@@ -29,7 +29,7 @@ rootCmd
   )
   .action(async (options, expression) => {
     if (!expression) {
-      if (Deno.isatty(Deno.stdin.rid)) {
+      if (Deno.stdin.isTerminal()) {
         console.error("Expression is required.");
         Deno.exit(1);
       }
@@ -166,7 +166,7 @@ rootCmd
       rows: string[][];
     };
 
-    if (!Deno.isatty(Deno.stdout.rid)) {
+    if (!Deno.stdout.isTerminal()) {
       console.log(body.rows.map((row) => row.join("\t")).join("\n"));
       return;
     }

@@ -50,7 +50,7 @@ export async function editText(text: string, extension: string) {
 }
 
 export function printCode(language: string, value: string) {
-  if (Deno.isatty(Deno.stdout.rid)) {
+  if (Deno.stdout.isTerminal()) {
     console.log(emphasize.highlight(language, value).value);
   } else {
     console.log(value);
@@ -58,7 +58,7 @@ export function printCode(language: string, value: string) {
 }
 
 export function printAsJSON(obj: unknown) {
-  if (Deno.isatty(Deno.stdout.rid)) {
+  if (Deno.stdout.isTerminal()) {
     console.log(
       emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );

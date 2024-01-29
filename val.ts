@@ -134,7 +134,7 @@ valCmd
       return;
     }
 
-    if (Deno.isatty(Deno.stdout.rid)) {
+    if (Deno.stdout.isTerminal()) {
       // @ts-ignore: strange fets issue
       printCode("typescript", code);
     } else {
@@ -161,7 +161,7 @@ valCmd
       return [name, `v${val.version}`, link];
     }) as string[][];
 
-    if (Deno.isatty(Deno.stdout.rid)) {
+    if (Deno.stdout.isTerminal()) {
       const table = new Table(...rows).header(["slug", "version", "link"]);
       table.render();
     } else {
