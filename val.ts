@@ -63,7 +63,7 @@ valCmd
 valCmd.command("rename").description("Rename a val").arguments(
   "<old-name> <new-name>",
 ).action(async (_, oldName, newName) => {
-  const { author, name } = parseVal(oldName);
+  const { author, name } = await parseVal(oldName);
 
   const getResp = await fetch(`/v1/alias/${author}/${name}`);
   if (!getResp.ok) {
@@ -96,7 +96,7 @@ valCmd
   .option("--readme", "Edit the readme instead of the code")
   .arguments("<val:string>")
   .action(async (options, valName) => {
-    const { author, name } = parseVal(valName);
+    const { author, name } = await parseVal(valName);
     const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
     if (getResp.status !== 200) {
       console.error(getResp.statusText);
@@ -184,7 +184,7 @@ valCmd
   .option("--json", "View as JSON")
   .arguments("<val:string>")
   .action(async (flags, val) => {
-    const { author, name } = parseVal(val);
+    const { author, name } = await parseVal(val);
     if (flags.web) {
       open(`https://val.town/v/${author}.${name}`);
       Deno.exit(0);
@@ -315,8 +315,8 @@ valCmd
   .description("Run a val.")
   .stopEarly()
   .arguments("<val:string> [args...]")
-  .action((_, val, ...args) => {
-    const { author, name } = parseVal(val);
+  .action(async (_, val, ...args) => {
+    const { author, name } = await parseVal(val);
 
     const { success } = new Deno.Command("deno", {
       args: [
@@ -343,8 +343,8 @@ valCmd
 valCmd.command("install").description("Install a val.").arguments(
   "<val:string>",
 ).option("--name <name:string>", "Executable file name").action(
-  (options, val) => {
-    const { author, name } = parseVal(val);
+  async (options, val) => {
+    const { author, name } = await parseVal(val);
 
     const { success } = new Deno.Command("deno", {
       args: [

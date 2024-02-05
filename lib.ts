@@ -29,7 +29,6 @@ export async function loadUser() {
     "user",
     await hash(valtownToken),
   );
-  console.log(cachePath);
   if (fs.existsSync(cachePath)) {
     const text = await Deno.readTextFile(cachePath);
     return JSON.parse(text);
@@ -46,13 +45,26 @@ export async function loadUser() {
   return user;
 }
 
-export function parseVal(val: string) {
+export async function parseVal(val: string) {
   if (val.startsWith("@")) {
     val = val.slice(1);
   }
 
-  const [author, name] = val.split(/[.\/]/);
-  return { author, name };
+  const parts = val.split(/[.\/]/);
+  if (parts.length == 1) {
+    const user = await loadUser();
+    return {
+      author: user.username,
+      name: val,
+    };
+  } else if (parts.length == 2) {
+    return {
+      author: parts[0],
+      name: parts[1],
+    };
+  }
+
+  throw new Error("invalid val");
 }
 
 export async function editText(text: string, extension: string) {

@@ -1,13 +1,7 @@
 #!/usr/bin/env -S deno run -A
 import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
 import { valCmd } from "./val.ts";
-import {
-  fetchValTown,
-  parseVal,
-  printAsJSON,
-  printCode,
-  valtownToken,
-} from "./lib.ts";
+import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
@@ -57,20 +51,14 @@ rootCmd
 
 rootCmd
   .command("repl")
-  .arguments("[val:string]")
   .description("Start a REPL.")
-  .action((_, val) => {
+  .action((_) => {
     const args = [
       "repl",
       "--allow-net",
       "--allow-env",
       "--reload=https://esm.town/v/",
     ];
-
-    if (val) {
-      const { author, name } = parseVal(val);
-      args.push(`--eval-file=https://esm.town/v/${author}/${name}`);
-    }
 
     const { success } = new Deno.Command("deno", {
       args,
