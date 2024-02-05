@@ -1,10 +1,11 @@
-import { Command, path, Table } from "./deps.ts";
+import { Command, open, Table, toText } from "./deps.ts";
+import { loadUser } from "./lib.ts";
 import {
   editText,
   fetchValTown,
+  parseVal,
   printAsJSON,
   printCode,
-  splitVal,
   valtownToken,
 } from "./lib.ts";
 
@@ -13,6 +14,7 @@ type Val = {
   author: {
     username: string;
   };
+  privacy: "private" | "unlisted" | "public";
   version: number;
 };
 
@@ -24,41 +26,96 @@ export const valCmd = new Command()
   });
 
 valCmd
+  .command("create")
+  .description("Create a new val")
+  .option("--privacy <privacy:string>", "privacy of the val")
+  .arguments("[name:string]")
+  .action(async (options, name) => {
+    let code: string;
+    if (Deno.stdin.isTerminal()) {
+      code = await editText("", "tsx");
+    } else {
+      code = await toText(Deno.stdin.readable);
+    }
+
+    const createResp = await fetchValTown("/v1/vals", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        privacy: options.privacy,
+        code,
+      }),
+    });
+
+    if (!createResp.ok) {
+      console.error(await createResp.text());
+      Deno.exit(1);
+    }
+
+    const val = await createResp.json();
+
+    console.log(`Create val ${val.name}`);
+  });
+
+valCmd.command("rename").description("Rename a val").arguments(
+  "<old-name> <new-name>",
+).action(async (_, oldName, newName) => {
+  const { author, name } = parseVal(oldName);
+
+  const getResp = await fetch(`/v1/alias/${author}/${name}`);
+  if (!getResp.ok) {
+    console.error(await getResp.text());
+    Deno.exit(1);
+  }
+  const val = await getResp.json();
+
+  const renameResp = await fetch(`/v1/vals/${val.id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: newName,
+    }),
+  });
+  if (!renameResp.ok) {
+    console.error(await renameResp.text());
+    Deno.exit(1);
+  }
+
+  console.log("Val rename successfully");
+});
+
+valCmd
   .command("edit")
   .description("Edit a val in the system editor.")
-  .option("--privacy <privacy:string>", "Privacy of the val", {
-    standalone: true,
-  })
-  .option("--name <name:string>", "Name of the val", { standalone: true })
+  .option("--privacy <privacy:string>", "Privacy of the val")
+  .option("--readme", "Edit the readme instead of the code")
   .arguments("<val:string>")
-  .action(async (options, val) => {
-    const { author, name } = splitVal(val);
+  .action(async (options, valName) => {
+    const { author, name } = parseVal(valName);
     const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
-
     if (getResp.status !== 200) {
       console.error(getResp.statusText);
       Deno.exit(1);
     }
+    const val = await getResp.json();
 
-    const { code, id: valID, privacy } = await getResp.json();
-
-    if (options.privacy || options.name) {
-      if (privacy === options.privacy) {
+    if (options.privacy) {
+      if (val.privacy === options.privacy) {
         console.error("No privacy changes.");
         return;
       }
 
-      if (name === options.name) {
-        console.error("No name changes.");
-        return;
-      }
-
-      const resp = await fetchValTown(`/v1/vals/${valID}`, {
+      const resp = await fetchValTown(`/v1/vals/${val.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ privacy: options.privacy, name: options.name }),
+        body: JSON.stringify({ privacy: options.privacy }),
       });
 
       if (!resp.ok) {
@@ -70,21 +127,47 @@ valCmd
       return;
     }
 
-    const edited = await editText(code, "ts");
-    if (code === edited) {
-      console.log("No changes.");
-      return;
+    if (options.readme) {
+      let readme: string;
+      if (Deno.stdin.isTerminal()) {
+        readme = await editText(val.readme || "", "md");
+      } else {
+        readme = await toText(Deno.stdin.readable);
+      }
+
+      const updateResp = await fetchValTown(`/v1/vals/${val.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ readme }),
+      });
+
+      if (!updateResp.ok) {
+        console.error(updateResp.statusText);
+        Deno.exit(1);
+      }
+
+      console.log("Updated!");
+      Deno.exit(0);
     }
 
-    const updateResp = await fetchValTown(`/v1/vals/${valID}/versions`, {
+    let code: string;
+    if (Deno.stdin.isTerminal()) {
+      code = await editText(val.code, "tsx");
+    } else {
+      code = await toText(Deno.stdin.readable);
+    }
+
+    const updateResp = await fetchValTown(`/v1/vals/${val.id}/versions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ code: edited }),
+      body: JSON.stringify({ code }),
     });
 
-    if (updateResp.status !== 201) {
+    if (!updateResp.ok) {
       console.error(updateResp.statusText);
       Deno.exit(1);
     }
@@ -101,7 +184,7 @@ valCmd
   .option("--json", "View as JSON")
   .arguments("<val:string>")
   .action(async (flags, val) => {
-    const { author, name } = splitVal(val);
+    const { author, name } = parseVal(val);
     if (flags.web) {
       open(`https://val.town/v/${author}.${name}`);
       Deno.exit(0);
@@ -146,9 +229,14 @@ valCmd
   .command("search")
   .description("Search vals.")
   .arguments("<query:string>")
-  .action(async (_, query) => {
+  .option("--limit <limit:number>", "Limit", {
+    default: 10,
+  })
+  .action(async (options, query) => {
     const resp = await fetchValTown(
-      `/v1/search/vals?query=${encodeURIComponent(query)}&limit=100`,
+      `/v1/search/vals?query=${
+        encodeURIComponent(query)
+      }&limit=${options.limit}`,
     );
     const { data } = await resp.json();
     if (!data) {
@@ -156,9 +244,9 @@ valCmd
       Deno.exit(1);
     }
     const rows = data.map((val: Val) => {
-      const name = `${val.author?.username}/${val.name}`;
-      const link = `https://val.town/v/${name.slice(1)}`;
-      return [name, `v${val.version}`, link];
+      const slug = `${val.author?.username}/${val.name}`;
+      const link = `https://val.town/v/${slug}`;
+      return [slug, `v${val.version}`, link];
     }) as string[][];
 
     if (Deno.stdout.isTerminal()) {
@@ -170,171 +258,55 @@ valCmd
   });
 
 valCmd
-  .command("serve")
-  .description("Serve an http val.")
-  .option("-p, --port <port:number>", "Port to serve on", { default: 8080 })
-  .option("-h, --hostname <host:string>", "Host to serve on", {
-    default: "localhost",
+  .command("list")
+  .description("List user vals.")
+  .option("--user <user:string>", "User")
+  .option("--limit <limit:number>", "Limit", {
+    default: 10,
   })
-  .arguments("<val:string>")
-  .action(async (options, slug) => {
-    const { author, name } = splitVal(slug);
-    const esmUrl = `https://esm.town/v/${author}/${name}`;
-    const script = await serveScript(esmUrl, options);
-    const tempfile = await Deno.makeTempFile({
-      suffix: ".ts",
-    });
-    Deno.writeTextFileSync(tempfile, script);
-    const { success } = new Deno.Command("deno", {
-      args: [
-        "run",
-        "--allow-env",
-        "--allow-net",
-        "--reload=https://esm.town/v/",
-        tempfile,
-      ],
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-      env: {
-        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
-        valtown: valtownToken,
-      },
-    }).outputSync();
-
-    Deno.removeSync(tempfile);
-    if (!success) {
-      Deno.exit(1);
-    }
-  });
-
-async function serveScript(
-  esmUrl: string,
-  options: { port: number; hostname: string },
-) {
-  const exports = await import(esmUrl);
-
-  if (exports.default) {
-    return `import server from "${esmUrl}";\nDeno.serve({port: ${options.port}, hostname: "${options.hostname}"}, server);`;
-  } else if (Object.keys(exports).length === 1) {
-    return `import {${
-      Object.keys(exports)[0]
-    }} from "${esmUrl}";\nDeno.serve({port: ${options.port}, hostname: "${options.hostname}"}, ${
-      Object.keys(exports)[0]
-    });`;
-  } else {
-    console.error("val must have a default export or a single named export");
-    Deno.exit(1);
-  }
-}
-
-valCmd
-  .command("clone")
-  .description("Clone a val.")
-  .arguments("<val:string> [filepath:string]")
-  .action(async (_, val, filepath) => {
-    const { author, name } = splitVal(val);
-    const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
-
-    if (resp.status !== 200) {
-      console.error(resp.statusText);
-      Deno.exit(1);
-    }
-
-    const { code } = await resp.json();
-    await Deno.writeTextFile(filepath || `${name}.ts`, code);
-  });
-
-valCmd
-  .command("pull")
-  .description("Pull a val.")
-  .option("--remote <val:string>", "Val to pull")
-  .arguments("<filepath:string>")
-  .action(async (options, filepath) => {
-    if (options.remote) {
-      const { author, name } = splitVal(options.remote);
-      const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
-      if (resp.status !== 200) {
-        console.error(resp.statusText);
+  .action(async (options) => {
+    let userID: string;
+    if (options.user) {
+      const resp = await fetchValTown(`/v1/alias/${options.user}`);
+      if (!resp.ok) {
+        console.error(await resp.text);
         Deno.exit(1);
       }
-
-      const { code, version } = await resp.json();
-      await Deno.writeTextFile(filepath, code);
-      console.log("Pulled version", version);
-      return;
-    }
-    const me = await fetchValTown("/v1/me");
-    if (!me.ok) {
-      console.error(me.statusText);
-      Deno.exit(1);
-    }
-    const data = await me.json();
-    const username = data.username.slice(1);
-    const name = path.parse(filepath).name;
-    const resp = await fetchValTown(`/v1/alias/${username}/${name}`);
-
-    if (resp.status !== 200) {
-      console.error(resp.statusText);
-      Deno.exit(1);
-    }
-    const { code, version } = await resp.json();
-    await Deno.writeTextFile(filepath, code);
-    console.log("Pulled version", version);
-  });
-
-valCmd
-  .command("push")
-  .description("Push a file to Val Town.")
-  .arguments("<filepath:string>")
-  .action(async (_, filepath) => {
-    const me = await fetchValTown("/v1/me");
-    if (!me.ok) {
-      console.error(me.statusText);
-      Deno.exit(1);
-    }
-    const data = await me.json();
-    const username = data.username.slice(1);
-
-    const name = path.parse(filepath).name;
-    const resp = await fetchValTown(`/v1/alias/${username}/${name}`);
-    if (resp.status == 200) {
-      const { id } = await resp.json();
-      const updateResp = await fetchValTown(`/v1/vals/${id}/versions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ code: Deno.readTextFileSync(filepath) }),
-      });
-
-      if (updateResp.status !== 201) {
-        console.error(updateResp.statusText);
-        Deno.exit(1);
-      }
-
-      console.log("Pushed!");
-    } else if (resp.status == 404) {
-      const resp = await fetchValTown(`/v1/vals`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          code: Deno.readTextFileSync(filepath),
-        }),
-      });
-
-      if (resp.status !== 201) {
-        console.error(resp.statusText);
-        Deno.exit(1);
-      }
-
-      console.log("Pushed!");
+      const user = await resp.json();
+      userID = user.id;
     } else {
-      console.error(resp.statusText);
+      const user = await loadUser();
+      userID = user.id;
+    }
+
+    const resp = await fetchValTown(
+      `/v1/users/${userID}/vals?limit=${options.limit}`,
+    );
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
+    }
+
+    const { data } = await resp.json();
+    if (!data) {
+      console.error("invalid response");
+      Deno.exit(1);
+    }
+    const rows = data.map((val: Val) => {
+      const slug = `${val.author?.username}/${val.name}`;
+      const link = `https://val.town/v/${slug}`;
+      return [slug, `v${val.version}`, link];
+    }) as string[][];
+
+    if (Deno.stdout.isTerminal()) {
+      const table = new Table(...rows).header([
+        "slug",
+        "version",
+        "link",
+      ]);
+      table.render();
+    } else {
+      console.log(rows.map((row) => row.join("\t")).join("\n"));
     }
   });
 
@@ -344,7 +316,7 @@ valCmd
   .stopEarly()
   .arguments("<val:string> [args...]")
   .action((_, val, ...args) => {
-    const { author, name } = splitVal(val);
+    const { author, name } = parseVal(val);
 
     const { success } = new Deno.Command("deno", {
       args: [
@@ -372,7 +344,7 @@ valCmd.command("install").description("Install a val.").arguments(
   "<val:string>",
 ).option("--name <name:string>", "Executable file name").action(
   (options, val) => {
-    const { author, name } = splitVal(val);
+    const { author, name } = parseVal(val);
 
     const { success } = new Deno.Command("deno", {
       args: [

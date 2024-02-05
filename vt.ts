@@ -3,9 +3,9 @@ import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
 import { valCmd } from "./val.ts";
 import {
   fetchValTown,
+  parseVal,
   printAsJSON,
   printCode,
-  splitVal,
   valtownToken,
 } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
@@ -68,7 +68,7 @@ rootCmd
     ];
 
     if (val) {
-      const { author, name } = splitVal(val);
+      const { author, name } = parseVal(val);
       args.push(`--eval-file=https://esm.town/v/${author}/${name}`);
     }
 

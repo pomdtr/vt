@@ -70,7 +70,7 @@ blobCmd
       Deno.exit(1);
     }
 
-    Deno.writeSync(Deno.stdout.rid, new Uint8Array(await resp.arrayBuffer()));
+    await Deno.stdout.write(new Uint8Array(await resp.arrayBuffer()));
   });
 
 blobCmd

@@ -1,4 +1,4 @@
-import { emphasize, shlex } from "./deps.ts";
+import { emphasize, fs, path, shlex, xdg } from "./deps.ts";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
@@ -16,7 +16,25 @@ export function fetchValTown(path: string, init?: RequestInit) {
   });
 }
 
-export function splitVal(val: string) {
+export async function loadUser() {
+  const cachePath = path.join(xdg.cache(), "vt", "username");
+  if (fs.existsSync(cachePath)) {
+    const text = await Deno.readTextFile(cachePath);
+    return JSON.parse(text);
+  }
+
+  const resp = await fetchValTown("/v1/me");
+  if (!resp.ok) {
+    throw new Error(await resp.text());
+  }
+  const user = await resp.json();
+
+  await Deno.mkdir(path.dirname(cachePath), { recursive: true });
+  await Deno.writeTextFile(cachePath, JSON.stringify(user));
+  return user;
+}
+
+export function parseVal(val: string) {
   if (val.startsWith("@")) {
     val = val.slice(1);
   }
