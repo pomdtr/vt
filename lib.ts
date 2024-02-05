@@ -1,4 +1,4 @@
-import { emphasize, fs, path, shlex, xdg } from "./deps.ts";
+import { emphasize, encodeHex, fs, path, shlex, xdg } from "./deps.ts";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
@@ -16,8 +16,20 @@ export function fetchValTown(path: string, init?: RequestInit) {
   });
 }
 
+async function hash(msg: string) {
+  const data = new TextEncoder().encode(msg);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+  return encodeHex(hashBuffer);
+}
+
 export async function loadUser() {
-  const cachePath = path.join(xdg.cache(), "vt", "username");
+  const cachePath = path.join(
+    xdg.cache(),
+    "vt",
+    "user",
+    await hash(valtownToken),
+  );
+  console.log(cachePath);
   if (fs.existsSync(cachePath)) {
     const text = await Deno.readTextFile(cachePath);
     return JSON.parse(text);

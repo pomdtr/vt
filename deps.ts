@@ -10,3 +10,4 @@ export { default as open } from "npm:open@10.0.3";
 export * as shlex from "npm:shlex@2.1.2";
 export { emphasize } from "npm:emphasize@6.0.0";
 export { default as xdg } from "https://deno.land/x/xdg_portable@v10.6.0/src/mod.deno.ts";
+export { encodeHex } from "https://deno.land/std@0.209.0/encoding/hex.ts";

@@ -18,9 +18,9 @@ Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [h
 
 ## Features
 
-- Manage, Edit and Serve your vals locally
+- Manage and Edit your vals locally
 - List/Upload/Download/Delete Blobs
-- Execute sqlite queries, import csv files
+- Execute SQLite queries, import csv files as tables
 
 ## Usage
 
