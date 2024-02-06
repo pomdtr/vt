@@ -57,8 +57,33 @@ valCmd
 
     const val = await createResp.json();
 
-    console.log(`Create val ${val.name}`);
+    console.log(
+      `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`,
+    );
   });
+
+valCmd.command("delete").description("Delete a val").arguments(
+  "<val:string>",
+).action(async (_, ...args) => {
+  const { author, name } = await parseVal(args[0]);
+
+  const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
+  if (!getResp.ok) {
+    console.error(await getResp.text());
+    Deno.exit(1);
+  }
+  const val = await getResp.json();
+
+  const deleteResp = await fetchValTown(`/v1/vals/${val.id}`, {
+    method: "DELETE",
+  });
+  if (!deleteResp.ok) {
+    console.error(await deleteResp.text());
+    Deno.exit(1);
+  }
+
+  console.log(`Val ${author}/${name} deleted successfully`);
+});
 
 valCmd.command("rename").description("Rename a val").arguments(
   "<old-name> <new-name>",
@@ -123,7 +148,9 @@ valCmd
         Deno.exit(1);
       }
 
-      console.log("Updated!");
+      console.log(
+        `Updated val ${val.author.username}/${val.name} privacy to ${options.privacy}`,
+      );
       return;
     }
 
@@ -148,7 +175,7 @@ valCmd
         Deno.exit(1);
       }
 
-      console.log("Updated!");
+      console.log(`Updated val ${val.author.username}/${val.name} readme`);
       Deno.exit(0);
     }
 
@@ -172,7 +199,7 @@ valCmd
       Deno.exit(1);
     }
 
-    console.log("Updated!");
+    console.log(`Updated val ${val.author.username}/${val.name}`);
   });
 
 valCmd
