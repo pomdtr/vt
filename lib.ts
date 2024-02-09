@@ -6,8 +6,12 @@ if (!valtownToken) {
   Deno.exit(1);
 }
 
-export function fetchValTown(path: string, init?: RequestInit) {
-  return fetch(`https://api.val.town${path}`, {
+export function fetchValTown(url: string, init?: RequestInit) {
+  if (!url.startsWith("https:")) {
+    url = `https://api.val.town${url}`;
+  }
+
+  return fetch(url, {
     ...init,
     headers: {
       ...init?.headers,

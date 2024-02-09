@@ -80,32 +80,34 @@ rootCmd
   .command("api")
   .description("Make an API request.")
   .example("Get your user info", "vt api /v1/me")
-  .arguments("<path:string>")
+  .arguments("<url-or-path:string>")
   .option("-X, --method <method:string>", "HTTP method.", { default: "GET" })
   .option("-d, --data <data:string>", "Request Body")
   .option("-H, --header <header:string>", "Request Header", { collect: true })
-  .action(async ({ method, data, header }, path) => {
-    if (!path.startsWith("/")) {
-      path = `/${path}`;
-    }
-    if (!path.startsWith("/v1")) {
-      path = `/v1${path}`;
-    }
-
+  .action(async ({ method, data, header }, url) => {
     const headers: Record<string, string> = {};
     for (const h of header || []) {
       const [key, value] = h.split(":", 2);
       headers[key.trim()] = value.trim();
     }
 
-    const resp = await fetchValTown(path, {
+    let body: string | undefined;
+    if (data == "@-") {
+      body = await toText(Deno.stdin.readable);
+    } else if (data) {
+      body = data;
+    }
+
+    const resp = await fetchValTown(url, {
       method,
       headers,
-      body: data,
+      body,
     });
 
-    if (resp.status != 200) {
-      console.error(resp.statusText);
+    if (resp.ok) {
+      console.error(
+        `request failed with status ${resp.status}: ${await resp.text()}`,
+      );
       Deno.exit(1);
     }
 
