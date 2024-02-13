@@ -104,7 +104,7 @@ rootCmd
       body,
     });
 
-    if (resp.ok) {
+    if (!resp.ok) {
       console.error(
         `request failed with status ${resp.status}: ${await resp.text()}`,
       );
