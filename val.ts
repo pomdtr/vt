@@ -77,6 +77,7 @@ valCmd
       outfile: tempfile,
       sourcemap: false,
       bundle: true,
+      minify: true,
       format: "esm",
       jsx: "automatic",
     });
