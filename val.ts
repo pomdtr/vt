@@ -71,26 +71,20 @@ valCmd
     const tempfile = await Deno.makeTempFile({
       suffix: ".js",
     });
-    esbuild
-      .build({
-        plugins: [...denoPlugins()],
-        entryPoints: [`https://esm.town/v/${author}/${name}`],
-        outfile: tempfile,
-        bundle: true,
-        platform: "browser",
-        format: "esm",
-        jsx: "automatic",
-        target: "esnext",
-        minify: false,
-        sourcemap: false,
-        treeShaking: true,
-      })
-      .then(() => {
-        const code = Deno.readTextFileSync(tempfile);
-        Deno.removeSync(tempfile);
-        console.log(code);
-      });
-    await esbuild.stop();
+    await esbuild.build({
+      plugins: [...denoPlugins()],
+      entryPoints: [`https://esm.town/v/${author}/${name}`],
+      outfile: tempfile,
+      sourcemap: false,
+      bundle: true,
+      format: "esm",
+      jsx: "automatic",
+    });
+
+    esbuild.stop();
+    const code = Deno.readTextFileSync(tempfile);
+    Deno.removeSync(tempfile);
+    console.log(code);
   });
 
 valCmd
