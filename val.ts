@@ -29,6 +29,7 @@ valCmd
   .command("create")
   .description("Create a new val")
   .option("--privacy <privacy:string>", "privacy of the val")
+  .option("--readme <readme:string>", "readme value")
   .arguments("[name:string]")
   .action(async (options, name) => {
     let code: string;
@@ -46,6 +47,7 @@ valCmd
       body: JSON.stringify({
         name,
         privacy: options.privacy,
+        readme: options.readme,
         code,
       }),
     });
@@ -78,7 +80,6 @@ valCmd
       sourcemap: false,
       bundle: true,
       treeShaking: true,
-      minify: true,
       format: "esm",
       jsx: "automatic",
     });
@@ -180,7 +181,7 @@ valCmd
       }
 
       console.log(
-        `Updated val ${val.author.username}/${val.name} privacy to ${options.privacy}`
+        `Updated val https://val.town/v/${val.author.username}/${val.name} privacy to ${options.privacy}`
       );
       return;
     }
@@ -206,7 +207,9 @@ valCmd
         Deno.exit(1);
       }
 
-      console.log(`Updated val ${val.author.username}/${val.name} readme`);
+      console.log(
+        `Updated val https://val.town/v/${val.author.username}/${val.name} readme`
+      );
       Deno.exit(0);
     }
 
@@ -230,7 +233,9 @@ valCmd
       Deno.exit(1);
     }
 
-    console.log(`Updated val ${val.author.username}/${val.name}`);
+    console.log(
+      `Updated val https://val.town/v/${val.author.username}/${val.name}`
+    );
   });
 
 valCmd
