@@ -11,5 +11,3 @@ export * as shlex from "npm:shlex@2.1.2";
 export { emphasize } from "npm:emphasize@6.0.0";
 export { default as xdg } from "https://deno.land/x/xdg_portable@v10.6.0/src/mod.deno.ts";
 export { encodeHex } from "https://deno.land/std@0.209.0/encoding/hex.ts";
-export * as esbuild from "https://deno.land/x/esbuild@v0.20.1/mod.js";
-export { denoPlugins } from "jsr:@luca/esbuild-deno-loader@0.9";

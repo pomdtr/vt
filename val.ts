@@ -1,4 +1,4 @@
-import { Command, open, Table, toText, esbuild, denoPlugins } from "./deps.ts";
+import { Command, open, Table, toText } from "./deps.ts";
 import { loadUser } from "./lib.ts";
 import {
   editText,
@@ -62,32 +62,6 @@ valCmd
     console.log(
       `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`
     );
-  });
-
-valCmd
-  .command("bundle")
-  .description("Bundle a val")
-  .arguments("<val:string>")
-  .action(async (_, val) => {
-    const { author, name } = await parseVal(val);
-    const tempfile = await Deno.makeTempFile({
-      suffix: ".js",
-    });
-    await esbuild.build({
-      plugins: [...denoPlugins()],
-      entryPoints: [`https://esm.town/v/${author}/${name}`],
-      outfile: tempfile,
-      sourcemap: false,
-      bundle: true,
-      treeShaking: true,
-      format: "esm",
-      jsx: "automatic",
-    });
-
-    esbuild.stop();
-    const code = Deno.readTextFileSync(tempfile);
-    Deno.removeSync(tempfile);
-    console.log(code);
   });
 
 valCmd

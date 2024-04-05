@@ -1,0 +1,5 @@
+{
+    "name": "@pomdtr/vt",
+    "version": "0.1.0",
+    "exports": "./vt.ts"
+}
