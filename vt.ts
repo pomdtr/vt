@@ -4,6 +4,7 @@ import { valCmd } from "./val.ts";
 import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
+import { path } from "./deps.ts";
 
 const rootCmd = new Command().name("vt").action(() => {
   rootCmd.showHelp();
@@ -19,7 +20,7 @@ rootCmd
   .arguments("[expression:string]")
   .option(
     "--args <args:string>",
-    "Arguments to pass to the expression as JSON array.",
+    "Arguments to pass to the expression as JSON array."
   )
   .action(async (options, expression) => {
     if (!expression) {
@@ -106,7 +107,7 @@ rootCmd
 
     if (!resp.ok) {
       console.error(
-        `request failed with status ${resp.status}: ${await resp.text()}`,
+        `request failed with status ${resp.status}: ${await resp.text()}`
       );
       Deno.exit(1);
     }
@@ -135,6 +136,41 @@ rootCmd
   });
 
 rootCmd.command("completions", new CompletionsCommand());
+
+rootCmd
+  .command("clone")
+  .description("Clone all public vals to a directory.")
+  .option("-p, --private", "Include private vals.")
+  .arguments("<dir:string>")
+  .action(async (_, dir) => {
+    let url = `https://api.val.town/v1/search/vals?limit=100&query=+`;
+    const vals = [];
+    while (true) {
+      console.log("fetching", url);
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        console.error(resp.statusText);
+        Deno.exit(1);
+      }
+
+      const { data, links } = await resp.json();
+      vals.push(...data);
+
+      if (!links.next) {
+        break;
+      }
+
+      url = links.next;
+    }
+
+    Deno.mkdirSync(dir, { recursive: true });
+    for (const val of vals) {
+      const userDir = path.join(dir, val.author.username);
+      Deno.mkdirSync(userDir, { recursive: true });
+
+      Deno.writeTextFileSync(path.join(userDir, `${val.name}.tsx`), val.code);
+    }
+  });
 
 rootCmd
   .command("query")
