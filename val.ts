@@ -202,7 +202,7 @@ valCmd
   .action(async (flags, slug) => {
     const { author, name } = await parseVal(slug);
     if (flags.web) {
-      open(`https://val.town/v/${author}.${name}`);
+      open(`https://val.town/v/${author}/${name}`);
       Deno.exit(0);
     }
 

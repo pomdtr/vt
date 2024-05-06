@@ -91,6 +91,17 @@ export async function parseVal(val: string) {
     val = val.slice(1);
   }
 
+  if (val.endsWith(".tsx")) {
+    const filename = val.split("/").pop() || "";
+    const [name] = filename.split(".");
+    const user = await loadUser();
+
+    return {
+      author: user.username,
+      name,
+    };
+  }
+
   const parts = val.split(/[.\/]/);
   if (parts.length == 1) {
     const user = await loadUser();
