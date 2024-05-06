@@ -6,18 +6,76 @@ if (!valtownToken) {
   Deno.exit(1);
 }
 
-export function fetchValTown(url: string, init?: RequestInit) {
-  if (!url.startsWith("https:")) {
-    url = `https://api.val.town${url}`;
+export async function fetchEnv() {
+  const { data: res, error } = await fetchValTown("/v1/eval", {
+    method: "POST",
+    body: JSON.stringify({
+      code: "JSON.stringify(Deno.env.toObject())",
+      args: [],
+    }),
+  });
+
+  if (error) {
+    throw error;
   }
 
-  return fetch(url, {
-    ...init,
-    headers: {
-      ...init?.headers,
-      Authorization: `Bearer ${valtownToken}`,
-    },
+  return JSON.parse(res);
+}
+
+export async function fetchValTown<T = any>(
+  path: string,
+  options?: RequestInit & {
+    paginate?: boolean;
+  }
+): Promise<{ data: T; error?: Error }> {
+  const apiURL = Deno.env.get("API_URL") || "https://api.val.town";
+  const headers = {
+    ...options?.headers,
+    Authorization: `Bearer ${valtownToken}`,
+  };
+  if (options?.paginate) {
+    const data = [];
+    let url = new URL(`${apiURL}${path}`);
+    url.searchParams.set("limit", "100");
+
+    while (true) {
+      const resp = await fetch(url, {
+        headers,
+      });
+      if (!resp.ok) {
+        throw new Error(await resp.text());
+      }
+
+      const res = await resp.json();
+      data.push(...res.data);
+
+      if (!res.links.next) {
+        break;
+      }
+
+      url = new URL(res.links.next);
+    }
+
+    return { data } as { data: T };
+  }
+
+  const resp = await fetch(`${apiURL}${path}`, {
+    ...options,
+    headers,
   });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    return { data: text as T, error: new Error(text) };
+  }
+
+  if (resp.headers.get("content-type")?.startsWith("application/json")) {
+    const data = await resp.json();
+    return { data };
+  }
+
+  const text = await resp.text();
+  return { data: text } as { data: T };
 }
 
 async function hash(msg: string) {
@@ -31,19 +89,14 @@ export async function loadUser() {
     xdg.cache(),
     "vt",
     "user",
-    await hash(valtownToken),
+    await hash(valtownToken)
   );
   if (fs.existsSync(cachePath)) {
     const text = await Deno.readTextFile(cachePath);
     return JSON.parse(text);
   }
 
-  const resp = await fetchValTown("/v1/me");
-  if (!resp.ok) {
-    throw new Error(await resp.text());
-  }
-  const user = await resp.json();
-
+  const { data: user } = await fetchValTown("/v1/me");
   await Deno.mkdir(path.dirname(cachePath), { recursive: true });
   await Deno.writeTextFile(cachePath, JSON.stringify(user));
   return user;
@@ -106,7 +159,7 @@ export function printCode(language: string, value: string) {
 export function printAsJSON(obj: unknown) {
   if (Deno.stdout.isTerminal()) {
     console.log(
-      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
+      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value
     );
   } else {
     console.log(JSON.stringify(obj));

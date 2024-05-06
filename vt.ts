@@ -1,10 +1,20 @@
 #!/usr/bin/env -S deno run -A
 import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
 import { valCmd } from "./val.ts";
-import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
+import {
+  fetchEnv,
+  fetchValTown,
+  printAsJSON,
+  printCode,
+  valtownToken,
+} from "./lib.ts";
 import { blobCmd } from "./blob.ts";
+import { encodeHex } from "jsr:@std/encoding/hex";
 import { tableCmd } from "./table.ts";
 import { path } from "./deps.ts";
+import * as embed from "./embed.ts";
+import * as dotenv from "jsr:@std/dotenv";
+import { existsSync } from "jsr:@std/fs/exists";
 
 const rootCmd = new Command().name("vt").action(() => {
   rootCmd.showHelp();
@@ -32,7 +42,7 @@ rootCmd
       expression = await toText(Deno.stdin.readable);
     }
 
-    const resp = await fetchValTown("/v1/eval", {
+    const { data } = await fetchValTown("/v1/eval", {
       method: "POST",
       body: JSON.stringify({
         code: expression,
@@ -40,14 +50,7 @@ rootCmd
       }),
     });
 
-    if (resp.status !== 200) {
-      console.error(resp.statusText);
-      Deno.exit(1);
-    }
-
-    const body = await resp.json();
-
-    printAsJSON(body);
+    console.log(data);
   });
 
 rootCmd
@@ -99,20 +102,18 @@ rootCmd
       body = data;
     }
 
-    const resp = await fetchValTown(url, {
+    const { data: res, error } = await fetchValTown(url, {
       method,
       headers,
       body,
     });
 
-    if (!resp.ok) {
-      console.error(
-        `request failed with status ${resp.status}: ${await resp.text()}`
-      );
+    if (error) {
+      console.error(error.message);
       Deno.exit(1);
     }
 
-    printAsJSON(await resp.json());
+    printAsJSON(res);
   });
 
 rootCmd
@@ -143,61 +144,241 @@ rootCmd
   .option("-p, --private", "Include private vals.")
   .arguments("<dir:string>")
   .action(async (_, dir) => {
-    let url = `https://api.val.town/v1/search/vals?limit=100&query=+`;
-    const vals = [];
-    while (true) {
-      console.log("fetching", url);
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error(resp.statusText);
-        Deno.exit(1);
-      }
-
-      const { data, links } = await resp.json();
-      vals.push(...data);
-
-      if (!links.next) {
-        break;
-      }
-
-      url = links.next;
-    }
+    const { data: me } = await fetchValTown("/v1/me");
+    const { data: vals } = await fetchValTown(`/v1/users/${me.id}/vals`, {
+      paginate: true,
+    });
 
     Deno.mkdirSync(dir, { recursive: true });
-    for (const val of vals) {
-      const userDir = path.join(dir, val.author.username);
-      Deno.mkdirSync(userDir, { recursive: true });
+    Deno.writeTextFileSync(
+      path.join(dir, "deno.json"),
+      JSON.stringify(
+        {
+          lock: false,
+          unstable: ["sloppy-imports"],
+          imports: {
+            [`https://esm.town/v/${me.username}/`]: "./vals/",
+          },
+          tasks: {
+            serve:
+              "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env ./serve.ts",
+            run: "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env",
+          },
+        },
+        null,
+        2
+      )
+    );
 
-      Deno.writeTextFileSync(path.join(userDir, `${val.name}.tsx`), val.code);
+    Deno.writeTextFileSync(path.join(dir, "types.d.ts"), embed.types);
+    const lock: Record<string, Meta> = {};
+    const valDir = path.join(dir, "vals");
+    Deno.mkdirSync(valDir, { recursive: true });
+    for (const val of vals) {
+      const filename = `${val.name}.tsx`;
+      Deno.writeTextFileSync(path.join(valDir, filename), val.code);
+
+      lock[filename] = {
+        id: val.id,
+        name: val.name,
+        hash: await encodeHex(
+          await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(val.code)
+          )
+        ),
+      };
     }
+
+    const env = await fetchEnv();
+    Deno.writeTextFileSync(path.join(dir, ".env"), dotenv.stringify(env));
+    Deno.writeTextFileSync(path.join(dir, "serve.ts"), embed.serve);
+    Deno.writeTextFileSync(path.join(dir, "README.md"), embed.readme);
+
+    Deno.writeTextFileSync(
+      path.join(dir, "vt.lock"),
+      JSON.stringify(lock, null, 2)
+    );
   });
+
+type Meta = {
+  id: string;
+  name: string;
+  hash: string;
+};
+
+rootCmd.command("sync").action(async () => {
+  // local -> remote
+  if (!existsSync("vt.lock")) {
+    console.error("No lock file found.");
+    Deno.exit(1);
+  }
+
+  const lock = JSON.parse(Deno.readTextFileSync("vt.lock")) as Record<
+    string,
+    Meta
+  >;
+  const files = [...Deno.readDirSync("vals")]
+    .filter((f) => f.isFile && f.name.endsWith(".tsx"))
+    .map((f) => f.name);
+  for (const file of files) {
+    const meta = lock[file];
+    // val does not exist remotely, create it
+    const code = Deno.readTextFileSync(`vals/${file}`);
+    if (!meta) {
+      if (confirm(`Create ${file} remotely?`)) {
+        const { data } = await fetchValTown("/v1/vals", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: file.slice(0, -4), code }),
+        });
+
+        lock[file] = {
+          id: data.id,
+          name: file.slice(0, -4),
+          hash: await encodeHex(
+            await crypto.subtle.digest(
+              "SHA-256",
+              new TextEncoder().encode(code)
+            )
+          ),
+        };
+        continue;
+      }
+    }
+
+    const hash = await encodeHex(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code))
+    );
+    if (hash === meta.hash) {
+      continue;
+    }
+
+    console.log(`Updating ${file}`);
+    const { error } = await fetchValTown(`/v1/vals/${meta.id}/versions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code }),
+    });
+
+    if (error) {
+      console.error(error);
+      Deno.exit(1);
+    }
+
+    lock[file] = {
+      ...meta,
+      hash,
+    };
+  }
+
+  const localVals: Record<string, Meta> = {};
+  for (const [name, meta] of Object.entries(lock)) {
+    if (!existsSync(`vals/${name}`)) {
+      if (
+        confirm(`Val ${name} was deleted. Do you want to delete it remotely?`)
+      ) {
+        await fetchValTown(`/v1/vals/${meta.id}`, { method: "DELETE" });
+        delete lock[name];
+      }
+    }
+
+    localVals[meta.id] = meta;
+  }
+
+  // remote -> local
+  const { data: me } = await fetchValTown("/v1/me");
+  const { data: vals } = await fetchValTown(`/v1/users/${me.id}/vals`, {
+    paginate: true,
+  });
+
+  for (const val of vals) {
+    const meta = localVals[val.id];
+    const filename = `${val.name}.tsx`;
+    const hash = await encodeHex(
+      await crypto.subtle.digest("SHA-256", new TextEncoder().encode(val.code))
+    );
+
+    // val does not exist locally, create it
+    if (!meta) {
+      console.log(`Creating ${filename}`);
+
+      const code = val.code;
+      Deno.writeTextFileSync(`vals/${filename}`, code);
+
+      lock[filename] = {
+        id: val.id,
+        name: val.name,
+        hash: await encodeHex(
+          await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code))
+        ),
+      };
+      continue;
+    }
+
+    if (hash !== meta.hash) {
+      if (confirm(`Update ${filename}?`)) {
+        const {
+          data: { code },
+        } = await fetchValTown(`/v1/vals/${val.id}`);
+        Deno.writeTextFileSync(`vals/${val.name}.tsx`, code);
+
+        lock[`${val.name}.tsx`] = {
+          ...meta,
+          hash: await encodeHex(
+            await crypto.subtle.digest(
+              "SHA-256",
+              new TextEncoder().encode(code)
+            )
+          ),
+        };
+      }
+    }
+
+    if (val.name != meta.name) {
+      console.log(`Renaming ${meta.name}.tsx to ${val.name}.tsx`);
+      Deno.rename(`vals/${meta.name}.tsx`, `vals/${val.name}.tsx`);
+      lock[`${val.name}.tsx`] = {
+        ...meta,
+        name: val.name,
+      };
+
+      delete lock[`${meta.name}.tsx`];
+    }
+  }
+
+  const remoteEnv = await fetchEnv();
+  const localEnv = dotenv.parse(Deno.readTextFileSync(".env"));
+  if (JSON.stringify(remoteEnv) !== JSON.stringify(localEnv)) {
+    Deno.writeTextFileSync(".env", dotenv.stringify(remoteEnv));
+  }
+
+  Deno.writeTextFileSync("vt.lock", JSON.stringify(lock, null, 2));
+});
 
 rootCmd
   .command("query")
   .description("Execute a query.")
   .arguments("<query:string>")
   .action(async (_, query) => {
-    const res = await fetchValTown("/v1/sqlite/execute", {
+    const { data: res } = await fetchValTown<{
+      rows: string[][];
+      columns: string[];
+    }>("/v1/sqlite/execute", {
       method: "POST",
       body: JSON.stringify({ statement: query }),
     });
 
-    if (!res.ok) {
-      console.error(res.statusText);
-      Deno.exit(1);
-    }
-
-    const body = (await res.json()) as {
-      columns: string[];
-      rows: string[][];
-    };
-
     if (!Deno.stdout.isTerminal()) {
-      console.log(body.rows.map((row) => row.join("\t")).join("\n"));
+      console.log(res.rows.map((row) => row.join("\t")).join("\n"));
       return;
     }
 
-    const table = new Table(...body.rows).header(body.columns);
+    const table = new Table(...res.rows).header(res.columns);
     table.render();
   });
 

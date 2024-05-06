@@ -39,7 +39,7 @@ valCmd
       code = await toText(Deno.stdin.readable);
     }
 
-    const createResp = await fetchValTown("/v1/vals", {
+    const { data: val } = await fetchValTown("/v1/vals", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -51,13 +51,6 @@ valCmd
         code,
       }),
     });
-
-    if (!createResp.ok) {
-      console.error(await createResp.text());
-      Deno.exit(1);
-    }
-
-    const val = await createResp.json();
 
     console.log(
       `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`
@@ -71,20 +64,11 @@ valCmd
   .action(async (_, ...args) => {
     const { author, name } = await parseVal(args[0]);
 
-    const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
-    if (!getResp.ok) {
-      console.error(await getResp.text());
-      Deno.exit(1);
-    }
-    const val = await getResp.json();
+    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
 
-    const deleteResp = await fetchValTown(`/v1/vals/${val.id}`, {
+    await fetchValTown(`/v1/vals/${val.id}`, {
       method: "DELETE",
     });
-    if (!deleteResp.ok) {
-      console.error(await deleteResp.text());
-      Deno.exit(1);
-    }
 
     console.log(`Val ${author}/${name} deleted successfully`);
   });
@@ -128,12 +112,7 @@ valCmd
   .arguments("<val:string>")
   .action(async (options, valName) => {
     const { author, name } = await parseVal(valName);
-    const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
-    if (getResp.status !== 200) {
-      console.error(getResp.statusText);
-      Deno.exit(1);
-    }
-    const val = await getResp.json();
+    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
 
     if (options.privacy) {
       if (val.privacy === options.privacy) {
@@ -141,16 +120,15 @@ valCmd
         return;
       }
 
-      const resp = await fetchValTown(`/v1/vals/${val.id}`, {
+      const { error } = await fetchValTown(`/v1/vals/${val.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ privacy: options.privacy }),
       });
-
-      if (!resp.ok) {
-        console.error(await resp.json());
+      if (error) {
+        console.error(error);
         Deno.exit(1);
       }
 
@@ -168,7 +146,7 @@ valCmd
         readme = await toText(Deno.stdin.readable);
       }
 
-      const updateResp = await fetchValTown(`/v1/vals/${val.id}`, {
+      const { error } = await fetchValTown(`/v1/vals/${val.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -176,8 +154,8 @@ valCmd
         body: JSON.stringify({ readme }),
       });
 
-      if (!updateResp.ok) {
-        console.error(updateResp.statusText);
+      if (error) {
+        console.error(error);
         Deno.exit(1);
       }
 
@@ -194,7 +172,7 @@ valCmd
       code = await toText(Deno.stdin.readable);
     }
 
-    const updateResp = await fetchValTown(`/v1/vals/${val.id}/versions`, {
+    const { error } = await fetchValTown(`/v1/vals/${val.id}/versions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -202,8 +180,8 @@ valCmd
       body: JSON.stringify({ code }),
     });
 
-    if (!updateResp.ok) {
-      console.error(updateResp.statusText);
+    if (error) {
+      console.error(error);
       Deno.exit(1);
     }
 
@@ -214,34 +192,28 @@ valCmd
 
 valCmd
   .command("view")
+  .alias("cat")
   .description("View val code.")
   .option("-w, --web", "View in browser")
   .option("--readme", "View readme")
   .option("--code", "View code")
   .option("--json", "View as JSON")
   .arguments("<val:string>")
-  .action(async (flags, val) => {
-    const { author, name } = await parseVal(val);
+  .action(async (flags, slug) => {
+    const { author, name } = await parseVal(slug);
     if (flags.web) {
       open(`https://val.town/v/${author}.${name}`);
       Deno.exit(0);
     }
 
-    const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
-
-    if (resp.status != 200) {
-      console.error(resp.statusText);
-      Deno.exit(1);
-    }
-
-    const body = await resp.json();
+    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
 
     if (flags.json) {
-      printAsJSON(body);
+      printAsJSON(val);
       Deno.exit(0);
     }
 
-    const { readme, code } = body;
+    const { readme, code } = val;
 
     if (flags.readme) {
       printCode("markdown", readme || "");
@@ -270,16 +242,15 @@ valCmd
     default: 10,
   })
   .action(async (options, query) => {
-    const resp = await fetchValTown(
+    const { data } = await fetchValTown(
       `/v1/search/vals?query=${encodeURIComponent(query)}&limit=${
         options.limit
-      }`
+      }`,
+      {
+        paginate: true,
+      }
     );
-    const { data } = await resp.json();
-    if (!data) {
-      console.error("invalid response");
-      Deno.exit(1);
-    }
+
     const rows = data.map((val: Val) => {
       const slug = `${val.author?.username}/${val.name}`;
       const link = `https://val.town/v/${slug}`;
@@ -304,27 +275,29 @@ valCmd
   .action(async (options) => {
     let userID: string;
     if (options.user) {
-      const resp = await fetchValTown(`/v1/alias/${options.user}`);
-      if (!resp.ok) {
-        console.error(await resp.text);
+      const { data: user, error } = await fetchValTown(
+        `/v1/alias/${options.user}`
+      );
+
+      if (error) {
+        console.error(error);
         Deno.exit(1);
       }
-      const user = await resp.json();
+
       userID = user.id;
     } else {
       const user = await loadUser();
       userID = user.id;
     }
 
-    const resp = await fetchValTown(
+    const { data, error } = await fetchValTown(
       `/v1/users/${userID}/vals?limit=${options.limit}`
     );
-    if (!resp.ok) {
-      console.error(await resp.text());
+    if (error) {
+      console.error(error.message);
       Deno.exit(1);
     }
 
-    const { data } = await resp.json();
     if (!data) {
       console.error("invalid response");
       Deno.exit(1);
