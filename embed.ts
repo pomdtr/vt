@@ -169,7 +169,12 @@ export const sync = `
 import { encodeHex } from "jsr:@std/encoding/hex";
 import { existsSync } from "jsr:@std/fs/exists";
 import * as dotenv from "jsr:@std/dotenv";
-const valtownToken = Deno.env.get("valtown");
+
+const valtownToken = Deno.env.get("VALTOWN_TOKEN");
+if (!valtownToken) {
+    console.error("VALTOWN_TOKEN is required");
+    Deno.exit(1);
+}
 
 export async function fetchEnv() {
   const { data: res, error } = await fetchValTown("/v1/eval", {
@@ -390,7 +395,7 @@ for (const val of Object.values(remoteVals)) {
 }
 
 const remoteEnv = await fetchEnv();
-const localEnv = dotenv.parse(Deno.readTextFileSync(".env"));
+const localEnv = existsSync(".env") ? dotenv.parse(Deno.readTextFileSync(".env")) : {};
 if (JSON.stringify(remoteEnv) !== JSON.stringify(localEnv)) {
   Deno.writeTextFileSync(".env", dotenv.stringify(remoteEnv));
 }

@@ -6,22 +6,6 @@ if (!valtownToken) {
   Deno.exit(1);
 }
 
-export async function fetchEnv() {
-  const { data: res, error } = await fetchValTown("/v1/eval", {
-    method: "POST",
-    body: JSON.stringify({
-      code: "JSON.stringify(Deno.env.toObject())",
-      args: [],
-    }),
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return JSON.parse(res);
-}
-
 export async function fetchValTown<T = any>(
   path: string,
   options?: RequestInit & {

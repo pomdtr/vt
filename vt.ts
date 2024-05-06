@@ -1,18 +1,11 @@
 #!/usr/bin/env -S deno run -A
 import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
 import { valCmd } from "./val.ts";
-import {
-  fetchEnv,
-  fetchValTown,
-  printAsJSON,
-  printCode,
-  valtownToken,
-} from "./lib.ts";
+import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 import { path } from "./deps.ts";
 import * as embed from "./embed.ts";
-import * as dotenv from "jsr:@std/dotenv";
 
 const rootCmd = new Command().name("vt").action(() => {
   rootCmd.showHelp();
@@ -168,8 +161,6 @@ rootCmd
     const valDir = path.join(dir, "vals");
     Deno.mkdirSync(valDir, { recursive: true });
 
-    const env = await fetchEnv();
-    Deno.writeTextFileSync(path.join(dir, ".env"), dotenv.stringify(env));
     Deno.writeTextFileSync(path.join(dir, "serve.ts"), embed.serve);
     Deno.writeTextFileSync(path.join(dir, "sync.ts"), embed.sync);
     Deno.writeTextFileSync(path.join(dir, "README.md"), embed.readme);
