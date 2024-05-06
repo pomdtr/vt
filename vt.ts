@@ -148,8 +148,9 @@ rootCmd
           tasks: {
             sync: "deno run --allow-all --quiet --env ./sync.ts",
             serve:
-              "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env ./serve.ts",
-            run: "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env",
+              "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env=valtown.env ./serve.ts",
+            run: "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env=valtown.env",
+            cache: "deno cache vals/*.tsx",
           },
         },
         null,
@@ -157,7 +158,7 @@ rootCmd
       )
     );
 
-    Deno.writeTextFileSync(path.join(dir, "types.d.ts"), embed.types);
+    Deno.writeTextFileSync(path.join(dir, "valtown.d.ts"), embed.types);
     const valDir = path.join(dir, "vals");
     Deno.mkdirSync(valDir, { recursive: true });
 

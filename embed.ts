@@ -395,14 +395,14 @@ for (const val of Object.values(remoteVals)) {
 }
 
 const remoteEnv = await fetchEnv();
-const localEnv = existsSync(".env") ? dotenv.parse(Deno.readTextFileSync(".env")) : {};
+const localEnv = existsSync("valtown.env") ? dotenv.parse(Deno.readTextFileSync("valtown.env")) : {};
 if (JSON.stringify(remoteEnv) !== JSON.stringify(localEnv)) {
-  Deno.writeTextFileSync(".env", dotenv.stringify(remoteEnv));
+  Deno.writeTextFileSync("valtown.env", dotenv.stringify(remoteEnv));
 }
 
 Deno.writeTextFileSync("vt.lock", JSON.stringify(lock, null, 2));
 `.trimStart();
 
 export const gitignore = `
-.env
+valtown.env
 `.trimStart();
