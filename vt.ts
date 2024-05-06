@@ -4,8 +4,6 @@ import { valCmd } from "./val.ts";
 import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
-import { path } from "./deps.ts";
-import * as embed from "./embed.ts";
 
 const rootCmd = new Command().name("vt").action(() => {
   rootCmd.showHelp();
@@ -128,64 +126,6 @@ rootCmd
   });
 
 rootCmd.command("completions", new CompletionsCommand());
-
-rootCmd
-  .command("clone")
-  .description("Clone your vals to a local directory.")
-  .arguments("<dir:string>")
-  .action(async (_, dir) => {
-    const { data: me } = await fetchValTown("/v1/me");
-    Deno.mkdirSync(dir, { recursive: true });
-    Deno.writeTextFileSync(
-      path.join(dir, "deno.json"),
-      JSON.stringify(
-        {
-          lock: false,
-          unstable: ["sloppy-imports"],
-          imports: {
-            [`https://esm.town/v/${me.username}/`]: "./vals/",
-          },
-          tasks: {
-            sync: "deno run --allow-all --quiet --env ./sync.ts",
-            serve:
-              "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env=valtown.env ./serve.ts",
-            run: "deno run --reload=https://esm.town --allow-read --allow-net --allow-env --quiet --env=valtown.env",
-            cache: "deno cache vals/*.tsx",
-          },
-        },
-        null,
-        2
-      )
-    );
-
-    Deno.writeTextFileSync(path.join(dir, "valtown.d.ts"), embed.types);
-    const valDir = path.join(dir, "vals");
-    Deno.mkdirSync(valDir, { recursive: true });
-
-    Deno.writeTextFileSync(path.join(dir, "serve.ts"), embed.serve);
-    Deno.writeTextFileSync(path.join(dir, "sync.ts"), embed.sync);
-    Deno.writeTextFileSync(path.join(dir, "README.md"), embed.readme);
-    Deno.writeTextFileSync(path.join(dir, ".gitignore"), embed.gitignore);
-
-    const command = new Deno.Command("deno", {
-      args: ["task", "sync"],
-      cwd: dir,
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-    });
-
-    const { success } = command.outputSync();
-    if (!success) {
-      Deno.exit(1);
-    }
-  });
-
-type Meta = {
-  id: string;
-  name: string;
-  hash: string;
-};
 
 rootCmd
   .command("query")
