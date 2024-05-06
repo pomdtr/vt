@@ -138,8 +138,7 @@ rootCmd.command("completions", new CompletionsCommand());
 
 rootCmd
   .command("clone")
-  .description("Clone all public vals to a directory.")
-  .option("-p, --private", "Include private vals.")
+  .description("Clone your vals to a local directory.")
   .arguments("<dir:string>")
   .action(async (_, dir) => {
     const { data: me } = await fetchValTown("/v1/me");
