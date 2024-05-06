@@ -313,6 +313,7 @@ for (const [name, meta] of Object.entries(lock)) {
       await fetchValTown(\`/v1/vals/\${meta.id}\`, { method: "DELETE" });
       delete lock[name];
     }
+    continue;
   }
 
   localVals[meta.id] = meta;
@@ -324,7 +325,19 @@ const { data: vals } = await fetchValTown(\`/v1/users/\${me.id}/vals\`, {
   paginate: true,
 });
 
-for (const val of vals) {
+const remoteVals: Record<string, Meta> = Object.fromEntries(
+    vals.map((val) => [val.id, val])
+);
+for (const [id, meta] of Object.entries(localVals)) {
+    if (!remoteVals[id]) {
+        if (confirm(\`Val \${meta.name} was deleted remotely. Do you want to delete it locally?\`)) {
+        Deno.remove(\`vals/\${meta.name}.tsx\`);
+        delete lock[\`\${meta.name}.tsx\`];
+        }
+    }
+}
+
+for (const val of Object.values(remoteVals)) {
   const meta = localVals[val.id];
   const filename = \`\${val.name}.tsx\`;
   const hash = await encodeHex(
