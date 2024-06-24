@@ -128,6 +128,31 @@ rootCmd
 rootCmd.command("completions", new CompletionsCommand());
 
 rootCmd
+  .command("email")
+  .description("Send an email.")
+  .option("-t, --to <to:string>", "To")
+  .option("-s, --subject <subject:string>", "Subject")
+  .option("-b, --body <body:string>", "Body")
+  .action(async (options) => {
+    const { data, error } = await fetchValTown("/v1/email", {
+      method: "POST",
+      body: JSON.stringify({
+        from: "pomdtr.vt@valtown.email",
+        to: options.to,
+        subject: options.subject,
+        text: options.body,
+      }),
+    });
+
+    if (error) {
+      console.error(error);
+      Deno.exit(1);
+    }
+
+    console.log(data);
+  });
+
+rootCmd
   .command("query")
   .description("Execute a query.")
   .arguments("<query:string>")
@@ -141,7 +166,7 @@ rootCmd
     });
 
     if (!Deno.stdout.isTerminal()) {
-      console.log(res.rows.map((row) => row.join("\t")).join("\n"));
+      console.log(JSON.stringify(res));
       return;
     }
 

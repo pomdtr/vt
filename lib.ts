@@ -6,13 +6,13 @@ if (!valtownToken) {
   Deno.exit(1);
 }
 
-export async function fetchValTown<T = any>(
+export async function fetchValTown(
   path: string,
   options?: RequestInit & {
     paginate?: boolean;
-  }
-): Promise<{ data: T; error?: Error }> {
-  const apiURL = Deno.env.get("API_URL") || "https://api.val.town";
+  },
+): Promise<Response> {
+  const apiURL = Deno.env.get("VALTOWN_API_URL") || "https://api.val.town";
   const headers = {
     ...options?.headers,
     Authorization: `Bearer ${valtownToken}`,
@@ -40,26 +40,18 @@ export async function fetchValTown<T = any>(
       url = new URL(res.links.next);
     }
 
-    return { data } as { data: T };
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 
-  const resp = await fetch(`${apiURL}${path}`, {
+  return await fetch(`${apiURL}${path}`, {
     ...options,
     headers,
   });
-
-  if (!resp.ok) {
-    const text = await resp.text();
-    return { data: text as T, error: new Error(text) };
-  }
-
-  if (resp.headers.get("content-type")?.startsWith("application/json")) {
-    const data = await resp.json();
-    return { data };
-  }
-
-  const text = await resp.text();
-  return { data: text } as { data: T };
 }
 
 async function hash(msg: string) {
@@ -73,14 +65,19 @@ export async function loadUser() {
     xdg.cache(),
     "vt",
     "user",
-    await hash(valtownToken)
+    await hash(valtownToken),
   );
   if (fs.existsSync(cachePath)) {
     const text = await Deno.readTextFile(cachePath);
     return JSON.parse(text);
   }
 
-  const { data: user } = await fetchValTown("/v1/me");
+  const resp = await fetchValTown("/v1/me");
+  if (!resp.ok) {
+    throw new Error(await resp.text());
+  }
+
+  const user = await resp.json();
   await Deno.mkdir(path.dirname(cachePath), { recursive: true });
   await Deno.writeTextFile(cachePath, JSON.stringify(user));
   return user;
@@ -143,7 +140,7 @@ export function printCode(language: string, value: string) {
 export function printAsJSON(obj: unknown) {
   if (Deno.stdout.isTerminal()) {
     console.log(
-      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value
+      emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );
   } else {
     console.log(JSON.stringify(obj));

@@ -14,18 +14,22 @@ blobCmd
   .description("List blobs.")
   .option("-p, --prefix <prefix:string>", "Prefix to filter by.")
   .action(async (options) => {
-    const { data: blobs, error } = await fetchValTown<
-      { key: string; size: number; lastModified: string }[]
-    >(
+    const resp = await fetchValTown(
       options.prefix
         ? `/v1/blob?prefix=${encodeURIComponent(options.prefix)}`
-        : "/v1/blob"
+        : "/v1/blob",
     );
 
-    if (error) {
-      console.error(error);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
+
+    const blobs = await resp.json() as {
+      key: string;
+      size: number;
+      lastModified: string;
+    }[];
 
     if (!Deno.stdout.isTerminal()) {
       for (const blob of blobs) {
@@ -43,9 +47,15 @@ blobCmd
   .description("Download a blob.")
   .arguments("<key:string> <path:string>")
   .action(async (_, key, path) => {
-    const { data: blob } = await fetchValTown(
-      `/v1/blob/${encodeURIComponent(key)}`
+    const resp = await fetchValTown(
+      `/v1/blob/${encodeURIComponent(key)}`,
     );
+
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+    const blob = await resp.blob();
 
     if (path == "-") {
       Deno.stdout.writeSync(new Uint8Array(await blob.arrayBuffer()));
@@ -60,10 +70,16 @@ blobCmd
   .description("Print a blob to stdout.")
   .arguments("<key:string>")
   .action(async (_, key) => {
-    const { data: content } = await fetchValTown(
-      `/v1/blob/${encodeURIComponent(key)}`
+    const resp = await fetchValTown(
+      `/v1/blob/${encodeURIComponent(key)}`,
     );
 
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    const content = await resp.arrayBuffer();
     await Deno.stdout.write(new Uint8Array(content));
   });
 blobCmd
@@ -71,15 +87,16 @@ blobCmd
   .description("Edit a blob.")
   .arguments("<key:string>")
   .action(async (_, key) => {
-    let { data: content, error } = await fetchValTown<string>(
-      `/v1/blob/${encodeURIComponent(key)}`
+    const resp = await fetchValTown(
+      `/v1/blob/${encodeURIComponent(key)}`,
     );
 
-    if (error) {
-      console.error(error);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
 
+    let content = await resp.text();
     if (Deno.stdin.isTerminal()) {
       const extension = key.split(".").pop() || "txt";
       content = await editText(content, extension);
@@ -122,12 +139,13 @@ blobCmd
   .alias("rm")
   .arguments("<key:string>")
   .action(async (_, key) => {
-    const res = await fetchValTown(`/v1/blob/${encodeURIComponent(key)}`, {
+    const resp = await fetchValTown(`/v1/blob/${encodeURIComponent(key)}`, {
       method: "DELETE",
     });
-    if (res.error) {
-      console.error(res.error);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
+
     console.log("Deleted!");
   });

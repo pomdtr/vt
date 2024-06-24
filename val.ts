@@ -39,7 +39,7 @@ valCmd
       code = await toText(Deno.stdin.readable);
     }
 
-    const { data: val } = await fetchValTown("/v1/vals", {
+    const resp = await fetchValTown("/v1/vals", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -52,8 +52,14 @@ valCmd
       }),
     });
 
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    const { data: val } = await resp.json();
     console.log(
-      `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`
+      `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`,
     );
   });
 
@@ -64,8 +70,12 @@ valCmd
   .action(async (_, ...args) => {
     const { author, name } = await parseVal(args[0]);
 
-    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
-
+    const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+    const val = await resp.json();
     await fetchValTown(`/v1/vals/${val.id}`, {
       method: "DELETE",
     });
@@ -112,28 +122,34 @@ valCmd
   .arguments("<val:string>")
   .action(async (options, valName) => {
     const { author, name } = await parseVal(valName);
-    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
+    const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
 
+    const val = await resp.json();
     if (options.privacy) {
       if (val.privacy === options.privacy) {
         console.error("No privacy changes.");
         return;
       }
 
-      const { error } = await fetchValTown(`/v1/vals/${val.id}`, {
+      const resp = await fetchValTown(`/v1/vals/${val.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ privacy: options.privacy }),
       });
-      if (error) {
-        console.error(error);
+
+      if (!resp.ok) {
+        console.error(await resp.text());
         Deno.exit(1);
       }
 
       console.log(
-        `Updated val https://val.town/v/${val.author.username}/${val.name} privacy to ${options.privacy}`
+        `Updated val https://val.town/v/${val.author.username}/${val.name} privacy to ${options.privacy}`,
       );
       return;
     }
@@ -146,7 +162,7 @@ valCmd
         readme = await toText(Deno.stdin.readable);
       }
 
-      const { error } = await fetchValTown(`/v1/vals/${val.id}`, {
+      const resp = await fetchValTown(`/v1/vals/${val.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -154,13 +170,13 @@ valCmd
         body: JSON.stringify({ readme }),
       });
 
-      if (error) {
-        console.error(error);
+      if (!resp.ok) {
+        console.error(await resp.text());
         Deno.exit(1);
       }
 
       console.log(
-        `Updated val https://val.town/v/${val.author.username}/${val.name} readme`
+        `Updated val https://val.town/v/${val.author.username}/${val.name} readme`,
       );
       Deno.exit(0);
     }
@@ -172,7 +188,7 @@ valCmd
       code = await toText(Deno.stdin.readable);
     }
 
-    const { error } = await fetchValTown(`/v1/vals/${val.id}/versions`, {
+    const versionResp = await fetchValTown(`/v1/vals/${val.id}/versions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -180,13 +196,13 @@ valCmd
       body: JSON.stringify({ code }),
     });
 
-    if (error) {
-      console.error(error);
+    if (!resp.ok) {
+      console.error(await versionResp.text());
       Deno.exit(1);
     }
 
     console.log(
-      `Updated val https://val.town/v/${val.author.username}/${val.name}`
+      `Updated val https://val.town/v/${val.author.username}/${val.name}`,
     );
   });
 
@@ -206,7 +222,12 @@ valCmd
       Deno.exit(0);
     }
 
-    const { data: val } = await fetchValTown(`/v1/alias/${author}/${name}`);
+    const resp = await fetchValTown(`/v1/alias/${author}/${name}`);
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+    const val = await resp.json();
 
     if (flags.json) {
       printAsJSON(val);
@@ -242,15 +263,21 @@ valCmd
     default: 10,
   })
   .action(async (options, query) => {
-    const { data } = await fetchValTown(
-      `/v1/search/vals?query=${encodeURIComponent(query)}&limit=${
-        options.limit
-      }`,
+    const resp = await fetchValTown(
+      `/v1/search/vals?query=${
+        encodeURIComponent(query)
+      }&limit=${options.limit}`,
       {
         paginate: true,
-      }
+      },
     );
 
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    const { data } = await resp.json();
     const rows = data.map((val: Val) => {
       const slug = `${val.author?.username}/${val.name}`;
       const link = `https://val.town/v/${slug}`;
@@ -272,36 +299,45 @@ valCmd
   .option("--limit <limit:number>", "Limit", {
     default: 10,
   })
+  .option("--json", "Output as JSON")
   .action(async (options) => {
     let userID: string;
     if (options.user) {
-      const { data: user, error } = await fetchValTown(
-        `/v1/alias/${options.user}`
+      const resp = await fetchValTown(
+        `/v1/alias/${options.user}`,
       );
 
-      if (error) {
-        console.error(error);
+      if (!resp.ok) {
+        console.error(await resp.text());
         Deno.exit(1);
       }
 
+      const user = await resp.json();
       userID = user.id;
     } else {
       const user = await loadUser();
       userID = user.id;
     }
 
-    const { data, error } = await fetchValTown(
-      `/v1/users/${userID}/vals?limit=${options.limit}`
+    const resp = await fetchValTown(
+      `/v1/users/${userID}/vals?limit=${options.limit}`,
     );
-    if (error) {
-      console.error(error.message);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
 
+    const { data } = await resp.json();
     if (!data) {
       console.error("invalid response");
       Deno.exit(1);
     }
+
+    if (options.json) {
+      printAsJSON(data);
+      Deno.exit(0);
+    }
+
     const rows = data.map((val: Val) => {
       const slug = `${val.author?.username}/${val.name}`;
       const link = `https://val.town/v/${slug}`;
