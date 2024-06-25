@@ -57,7 +57,7 @@ valCmd
       Deno.exit(1);
     }
 
-    const { data: val } = await resp.json();
+    const val = await resp.json();
     console.log(
       `Created val ${val.name}, available at https://val.town/v/${val.author.username}/${val.name}`,
     );

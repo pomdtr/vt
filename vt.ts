@@ -19,7 +19,7 @@ rootCmd
   .arguments("[expression:string]")
   .option(
     "--args <args:string>",
-    "Arguments to pass to the expression as JSON array."
+    "Arguments to pass to the expression as JSON array.",
   )
   .action(async (options, expression) => {
     if (!expression) {
@@ -31,7 +31,7 @@ rootCmd
       expression = await toText(Deno.stdin.readable);
     }
 
-    const { data } = await fetchValTown("/v1/eval", {
+    const resp = await fetchValTown("/v1/eval", {
       method: "POST",
       body: JSON.stringify({
         code: expression,
@@ -39,7 +39,12 @@ rootCmd
       }),
     });
 
-    console.log(data);
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    console.log(resp);
   });
 
 rootCmd
@@ -91,18 +96,18 @@ rootCmd
       body = data;
     }
 
-    const { data: res, error } = await fetchValTown(url, {
+    const resp = await fetchValTown(url, {
       method,
       headers,
       body,
     });
 
-    if (error) {
-      console.error(error.message);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
 
-    printAsJSON(res);
+    printAsJSON(await resp.json());
   });
 
 rootCmd
@@ -122,6 +127,11 @@ rootCmd
       Deno.exit(1);
     }
 
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
     printCode("yaml", await resp.text());
   });
 
@@ -134,7 +144,7 @@ rootCmd
   .option("-s, --subject <subject:string>", "Subject")
   .option("-b, --body <body:string>", "Body")
   .action(async (options) => {
-    const { data, error } = await fetchValTown("/v1/email", {
+    const resp = await fetchValTown("/v1/email", {
       method: "POST",
       body: JSON.stringify({
         from: "pomdtr.vt@valtown.email",
@@ -144,12 +154,12 @@ rootCmd
       }),
     });
 
-    if (error) {
-      console.error(error);
+    if (!resp.ok) {
+      console.error(await resp.text());
       Deno.exit(1);
     }
 
-    console.log(data);
+    console.log("Email sent.");
   });
 
 rootCmd
@@ -157,14 +167,17 @@ rootCmd
   .description("Execute a query.")
   .arguments("<query:string>")
   .action(async (_, query) => {
-    const { data: res } = await fetchValTown<{
-      rows: string[][];
-      columns: string[];
-    }>("/v1/sqlite/execute", {
+    const resp = await fetchValTown("/v1/sqlite/execute", {
       method: "POST",
       body: JSON.stringify({ statement: query }),
     });
 
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    const res = await resp.json();
     if (!Deno.stdout.isTerminal()) {
       console.log(JSON.stringify(res));
       return;
