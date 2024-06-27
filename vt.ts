@@ -107,7 +107,11 @@ rootCmd
       Deno.exit(1);
     }
 
-    printAsJSON(await resp.json());
+    if (resp.headers.get("Content-Type")?.includes("application/json")) {
+      return printAsJSON(await resp.json());
+    }
+
+    console.log(await resp.text());
   });
 
 rootCmd
