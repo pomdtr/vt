@@ -5,7 +5,7 @@
 You will need to install [deno](https://deno.land/) first.
 
 ```bash
-deno install -Arf http://deno.land/x/vt_cli/vt.ts
+deno install -Agf http://deno.land/x/vt_cli/vt.ts
 ```
 
 Run `vt completions --help` for instructions on how to enable shell completions.
