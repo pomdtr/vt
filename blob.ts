@@ -1,4 +1,6 @@
-import { Command, Table, toText } from "./deps.ts";
+import { Table } from "@cliffy/table";
+import { Command } from "@cliffy/command";
+import { toText } from "@std/streams";
 import { editText, fetchValTown } from "./lib.ts";
 
 export const blobCmd = new Command()

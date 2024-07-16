@@ -1,5 +1,9 @@
 #!/usr/bin/env -S deno run -A
-import { Command, CompletionsCommand, open, Table, toText } from "./deps.ts";
+import { Command } from "@cliffy/command";
+import { CompletionsCommand } from "@cliffy/command/completions";
+import open from "open";
+import { toText } from "@std/streams";
+import { Table } from "@cliffy/table";
 import { valCmd } from "./val.ts";
 import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";

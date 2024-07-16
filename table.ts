@@ -1,4 +1,5 @@
-import { Command, path } from "./deps.ts";
+import { Command } from "@cliffy/command";
+import * as path from "@std/path";
 import { fetchValTown, printAsJSON } from "./lib.ts";
 
 export const tableCmd = new Command()
@@ -104,7 +105,7 @@ async function csvDump(csvPath: string, tableName: string) {
   try {
     return runSqliteScript(
       tempfile,
-      `.mode csv\n.import ${csvPath} ${tableName}\n.output stdout\n.dump ${tableName}\n`
+      `.mode csv\n.import ${csvPath} ${tableName}\n.output stdout\n.dump ${tableName}\n`,
     );
   } catch (e) {
     throw new Error(e);

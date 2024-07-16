@@ -1,4 +1,7 @@
-import { Command, open, Table, toText } from "./deps.ts";
+import { Command } from "@cliffy/command";
+import open from "open";
+import { Table } from "@cliffy/table";
+import { toText } from "@std/streams";
 import { loadUser } from "./lib.ts";
 import {
   editText,

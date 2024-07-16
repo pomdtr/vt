@@ -1,4 +1,8 @@
-import { emphasize, encodeHex, fs, path, shlex, xdg } from "./deps.ts";
+import { encodeHex } from "@std/encoding/hex";
+import * as path from "@std/path";
+import * as fs from "@std/fs";
+import shlex from "shlex";
+import { createEmphasize } from "emphasize";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
@@ -62,7 +66,9 @@ async function hash(msg: string) {
 
 export async function loadUser() {
   const cachePath = path.join(
-    xdg.cache(),
+    Deno.env.get("XDG_CACHE_HOME") ||
+      path.join(Deno.env.get("HOME")!, ".cache"),
+    "smallweb",
     "vt",
     "user",
     await hash(valtownToken),
@@ -131,6 +137,7 @@ export async function editText(text: string, extension: string) {
 
 export function printCode(language: string, value: string) {
   if (Deno.stdout.isTerminal()) {
+    const emphasize = createEmphasize();
     console.log(emphasize.highlight(language, value).value);
   } else {
     console.log(value);
@@ -139,6 +146,7 @@ export function printCode(language: string, value: string) {
 
 export function printAsJSON(obj: unknown) {
   if (Deno.stdout.isTerminal()) {
+    const emphasize = createEmphasize();
     console.log(
       emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );
