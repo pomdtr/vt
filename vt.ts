@@ -63,6 +63,9 @@ rootCmd.command("env").option("--json", "Output as JSON.")
       }
 
       const env = await resp.json();
+      delete env["VALTOWN_API_URL"];
+      delete env["valtown"];
+
       if (options.json) {
         printAsJSON(env);
         return;
