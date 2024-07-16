@@ -47,6 +47,27 @@ rootCmd
     console.log(resp);
   });
 
+rootCmd.command("env").description("Print environment variables.").action(
+  async () => {
+    const resp = await fetchValTown("/v1/eval", {
+      method: "POST",
+      body: JSON.stringify({
+        code: "JSON.stringify(Deno.env.toObject())",
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error(await resp.text());
+      Deno.exit(1);
+    }
+
+    const env = await resp.json();
+    for (const [key, value] of Object.entries(env)) {
+      console.log(`${key}=${value}`);
+    }
+  },
+);
+
 rootCmd
   .command("repl")
   .description("Start a REPL.")
