@@ -1,6 +1,9 @@
 #!/usr/bin/env -S deno run -A
 import { Command } from "@cliffy/command";
 import { CompletionsCommand } from "@cliffy/command/completions";
+import { UpgradeCommand } from "@cliffy/command/upgrade";
+import { JsrProvider } from "@cliffy/command/upgrade/provider/jsr";
+import manifest from "./deno.json" with { type: "json" };
 import open from "open";
 import { toText } from "@std/streams";
 import { Table } from "@cliffy/table";
@@ -9,9 +12,11 @@ import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
-const rootCmd = new Command().name("vt").action(() => {
-  rootCmd.showHelp();
-});
+const rootCmd = new Command().name("vt").version(manifest.version).action(
+  () => {
+    rootCmd.showHelp();
+  },
+);
 
 rootCmd.command("val", valCmd);
 rootCmd.command("blob", blobCmd);
@@ -224,5 +229,14 @@ rootCmd
     const table = new Table(...res.rows).header(res.columns);
     table.render();
   });
+
+rootCmd.command(
+  "upgrade",
+  new UpgradeCommand({
+    provider: new JsrProvider({
+      package: "@pomdtr/vt",
+    }),
+  }),
+);
 
 await rootCmd.parse();
