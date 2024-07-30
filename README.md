@@ -10,6 +10,12 @@ deno install -Agrf jsr:@pomdtr/vt
 
 Run `vt completions --help` for instructions on how to enable shell completions.
 
+## Upgrading
+
+```bash
+vt upgrade
+```
+
 ## Authentication
 
 Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [here](https://www.val.town/settings/api).
