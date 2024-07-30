@@ -233,6 +233,7 @@ rootCmd
 rootCmd.command(
   "upgrade",
   new UpgradeCommand({
+    args: ["--allow-all"],
     provider: new JsrProvider({
       package: "@pomdtr/vt",
     }),
