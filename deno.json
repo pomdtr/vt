@@ -1,6 +1,6 @@
 {
     "name": "@pomdtr/vt",
-    "version": "1.10.5",
+    "version": "1.10.6",
     "exports": "./vt.ts",
     "imports": {
         "@std/path": "jsr:@std/path@1.0.0",
