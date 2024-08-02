@@ -2,13 +2,12 @@ import { Command } from "@cliffy/command";
 import open from "open";
 import { Table } from "@cliffy/table";
 import { toText } from "@std/streams";
-import { loadUser } from "./lib.ts";
+import { loadUser, printMarkdown, printTypescript } from "./lib.ts";
 import {
   editText,
   fetchValTown,
   parseVal,
-  printAsJSON,
-  printCode,
+  printJson,
   valtownToken,
 } from "./lib.ts";
 
@@ -221,7 +220,7 @@ valCmd
   .action(async (flags, slug) => {
     const { author, name } = await parseVal(slug);
     if (flags.web) {
-      open(`https://val.town/v/${author}/${name}`);
+      await open(`https://val.town/v/${author}/${name}`);
       Deno.exit(0);
     }
 
@@ -233,26 +232,26 @@ valCmd
     const val = await resp.json();
 
     if (flags.json) {
-      printAsJSON(val);
+      printJson(val);
       Deno.exit(0);
     }
 
     const { readme, code } = val;
 
     if (flags.readme) {
-      printCode("markdown", readme || "");
+      printMarkdown(readme || "");
       return;
     }
 
     if (flags.code) {
       // @ts-ignore: strange fets issue
-      printCode("typescript", code);
+      printTypescript(code);
       return;
     }
 
     if (Deno.stdout.isTerminal()) {
       // @ts-ignore: strange fets issue
-      printCode("typescript", code);
+      printTypescript(code);
     } else {
       console.log(code);
     }
@@ -337,7 +336,7 @@ valCmd
     }
 
     if (options.json) {
-      printAsJSON(data);
+      printJson(data);
       Deno.exit(0);
     }
 

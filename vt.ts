@@ -8,7 +8,7 @@ import open from "open";
 import { toText } from "@std/streams";
 import { Table } from "@cliffy/table";
 import { valCmd } from "./val.ts";
-import { fetchValTown, printAsJSON, printCode, valtownToken } from "./lib.ts";
+import { fetchValTown, printJson, printYaml, valtownToken } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
@@ -76,7 +76,7 @@ rootCmd.command("env").option("--json", "Output as JSON.")
       delete env["valtown"];
 
       if (options.json) {
-        printAsJSON(env);
+        printJson(env);
         return;
       }
 
@@ -147,7 +147,7 @@ rootCmd
     }
 
     if (resp.headers.get("Content-Type")?.includes("application/json")) {
-      return printAsJSON(await resp.json());
+      return printJson(await resp.json());
     }
 
     console.log(await resp.text());
@@ -175,7 +175,7 @@ rootCmd
       Deno.exit(1);
     }
 
-    printCode("yaml", await resp.text());
+    printYaml(await resp.text());
   });
 
 rootCmd.command("completions", new CompletionsCommand());

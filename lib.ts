@@ -3,6 +3,10 @@ import * as path from "@std/path";
 import * as fs from "@std/fs";
 import shlex from "shlex";
 import { createEmphasize } from "emphasize";
+import json from "npm:highlight.js/lib/languages/json";
+import markdown from "npm:highlight.js/lib/languages/markdown";
+import typescript from "npm:highlight.js/lib/languages/typescript";
+import yaml from "npm:highlight.js/lib/languages/yaml";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
@@ -135,18 +139,42 @@ export async function editText(text: string, extension: string) {
   return Deno.readTextFile(tempfile);
 }
 
-export function printCode(language: string, value: string) {
+export function printYaml(value: string) {
   if (Deno.stdout.isTerminal()) {
     const emphasize = createEmphasize();
-    console.log(emphasize.highlight(language, value).value);
+    emphasize.register({ yaml });
+    console.log(emphasize.highlight("yaml", value).value);
   } else {
     console.log(value);
   }
 }
 
-export function printAsJSON(obj: unknown) {
+export function printTypescript(value: string) {
   if (Deno.stdout.isTerminal()) {
     const emphasize = createEmphasize();
+    emphasize.register({ typescript });
+    console.log(emphasize.highlight("typescript", value).value);
+  } else {
+    console.log(value);
+  }
+}
+
+export function printMarkdown(value: string) {
+  if (Deno.stdout.isTerminal()) {
+    const emphasize = createEmphasize();
+    emphasize.register({ markdown });
+    console.log(emphasize.highlight("markdown", value).value);
+  } else {
+    console.log(value);
+  }
+}
+
+export function printJson(obj: unknown) {
+  if (Deno.stdout.isTerminal()) {
+    const emphasize = createEmphasize();
+    emphasize.register({
+      json,
+    });
     console.log(
       emphasize.highlight("json", JSON.stringify(obj, null, 2)).value,
     );

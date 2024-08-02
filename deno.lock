@@ -18,6 +18,7 @@
       "jsr:@std/streams@0.224.5": "jsr:@std/streams@0.224.5",
       "jsr:@std/text@1.0.0-rc.1": "jsr:@std/text@1.0.0-rc.1",
       "npm:emphasize@7.0.0": "npm:emphasize@7.0.0",
+      "npm:highlight.js": "npm:highlight.js@11.9.0",
       "npm:open@10.1.0": "npm:open@10.1.0",
       "npm:shlex@2.1.2": "npm:shlex@2.1.2"
     },

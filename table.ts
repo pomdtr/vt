@@ -1,6 +1,6 @@
 import { Command } from "@cliffy/command";
 import * as path from "@std/path";
-import { fetchValTown, printAsJSON } from "./lib.ts";
+import { fetchValTown, printJson } from "./lib.ts";
 
 export const tableCmd = new Command()
   .name("table")
@@ -93,7 +93,7 @@ tableCmd
       throw new Error(resp.statusText);
     }
 
-    printAsJSON(await resp.json());
+    printJson(await resp.json());
   });
 
 function dbDump(dbPath: string, tableName: string) {
