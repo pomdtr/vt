@@ -1,22 +1,23 @@
 {
-    "name": "@pomdtr/vt",
-    "version": "1.10.7",
-    "exports": "./vt.ts",
-    "imports": {
-        "@std/path": "jsr:@std/path@1.0.0",
-        "@std/fs": "jsr:@std/fs@0.229.3",
-        "@std/streams": "jsr:@std/streams@0.224.5",
-        "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.5",
-        "@cliffy/table": "jsr:@cliffy/table@1.0.0-rc.5",
-        "open": "npm:open@10.1.0",
-        "emphasize": "npm:emphasize@7.0.0",
-        "shlex": "npm:shlex@2.1.2",
-        "xdg-portable": "npm:xdg-portable",
-        "@std/encoding": "jsr:@std/encoding@1.0.1"
-    },
-    "fmt": {
-        "include": [
-            "**/*.ts"
-        ]
-    }
+  "name": "@pomdtr/vt",
+  "version": "1.10.7",
+  "exports": "./vt.ts",
+  "imports": {
+    "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.5",
+    "@cliffy/table": "jsr:@cliffy/table@1.0.0-rc.5",
+    "@std/encoding": "jsr:@std/encoding@1.0.1",
+    "@std/fs": "jsr:@std/fs@0.229.3",
+    "@std/path": "jsr:@std/path@1.0.0",
+    "@std/streams": "jsr:@std/streams@0.224.5",
+    "emphasize": "npm:emphasize@7.0.0",
+    "highlight.js": "npm:highlight.js@^11.10.0",
+    "open": "npm:open@10.1.0",
+    "shlex": "npm:shlex@2.1.2",
+    "xdg-portable": "npm:xdg-portable"
+  },
+  "fmt": {
+    "include": [
+      "**/*.ts"
+    ]
+  }
 }

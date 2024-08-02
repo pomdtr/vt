@@ -17,8 +17,10 @@
       "jsr:@std/path@1.0.0-rc.1": "jsr:@std/path@1.0.0-rc.1",
       "jsr:@std/streams@0.224.5": "jsr:@std/streams@0.224.5",
       "jsr:@std/text@1.0.0-rc.1": "jsr:@std/text@1.0.0-rc.1",
+      "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:emphasize@7.0.0": "npm:emphasize@7.0.0",
       "npm:highlight.js": "npm:highlight.js@11.9.0",
+      "npm:highlight.js@^11.10.0": "npm:highlight.js@11.10.0",
       "npm:open@10.1.0": "npm:open@10.1.0",
       "npm:shlex@2.1.2": "npm:shlex@2.1.2"
     },
@@ -97,6 +99,10 @@
           "@types/unist": "@types/unist@3.0.2"
         }
       },
+      "@types/node@18.16.19": {
+        "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
+        "dependencies": {}
+      },
       "@types/unist@3.0.2": {
         "integrity": "sha512-dqId9J8K/vGi5Zr7oo212BGii5m3q5Hxlkwy3WpYuKPklmBEvsbMYYyLxAQpSffdLl/gdW0XUpKWFvYmyoWCoQ==",
         "dependencies": {}
@@ -144,6 +150,10 @@
           "highlight.js": "highlight.js@11.9.0",
           "lowlight": "lowlight@3.1.0"
         }
+      },
+      "highlight.js@11.10.0": {
+        "integrity": "sha512-SYVnVFswQER+zu1laSya563s+F8VDGt7o35d4utbamowvUNLLMovFqwCLSocpZTz3MgaSRA1IbqRWZv97dtErQ==",
+        "dependencies": {}
       },
       "highlight.js@11.9.0": {
         "integrity": "sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==",
@@ -202,6 +212,7 @@
       "jsr:@std/path@1.0.0",
       "jsr:@std/streams@0.224.5",
       "npm:emphasize@7.0.0",
+      "npm:highlight.js@^11.10.0",
       "npm:open@10.1.0",
       "npm:shlex@2.1.2",
       "npm:xdg-portable"

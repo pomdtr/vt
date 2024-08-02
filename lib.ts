@@ -3,10 +3,10 @@ import * as path from "@std/path";
 import * as fs from "@std/fs";
 import shlex from "shlex";
 import { createEmphasize } from "emphasize";
-import json from "npm:highlight.js/lib/languages/json";
-import markdown from "npm:highlight.js/lib/languages/markdown";
-import typescript from "npm:highlight.js/lib/languages/typescript";
-import yaml from "npm:highlight.js/lib/languages/yaml";
+import json from "highlight.js/lib/languages/json";
+import markdown from "highlight.js/lib/languages/markdown";
+import typescript from "highlight.js/lib/languages/typescript";
+import yaml from "highlight.js/lib/languages/yaml";
 
 export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
 if (!valtownToken) {
