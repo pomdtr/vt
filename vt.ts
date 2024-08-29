@@ -9,6 +9,7 @@ import { toText } from "@std/streams";
 import { Table } from "@cliffy/table";
 import { valCmd } from "./val.ts";
 import {
+  fetchEnv,
   fetchValTown,
   parseVal,
   printJson,
@@ -65,29 +66,19 @@ vt
 vt.command("env").option("--json", "Output as JSON.")
   .description("Print environment variables.").action(
     async (options) => {
-      const resp = await fetchValTown("/v1/eval", {
-        method: "POST",
-        body: JSON.stringify({
-          code: "JSON.stringify(Deno.env.toObject())",
-        }),
-      });
+      try {
+        const env = await fetchEnv();
+        if (options.json) {
+          printJson(env);
+          return;
+        }
 
-      if (!resp.ok) {
-        console.error(await resp.text());
+        for (const [key, value] of Object.entries(env)) {
+          console.log(`${key}=${value}`);
+        }
+      } catch (error) {
+        console.error(error.message);
         Deno.exit(1);
-      }
-
-      const env = await resp.json();
-      delete env["VALTOWN_API_URL"];
-      delete env["valtown"];
-
-      if (options.json) {
-        printJson(env);
-        return;
-      }
-
-      for (const [key, value] of Object.entries(env)) {
-        console.log(`${key}=${value}`);
       }
     },
   );
@@ -217,6 +208,7 @@ vt.command("run").description("Run a val")
       console.error("Val is required.");
       Deno.exit(1);
     }
+
     const { author, name } = await parseVal(val);
     const command = new Deno.Command("deno", {
       args: [
@@ -227,6 +219,9 @@ vt.command("run").description("Run a val")
         `https://esm.town/v/${author}/${name}`,
         ...args,
       ],
+      env: {
+        valtown: valtownToken,
+      },
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",

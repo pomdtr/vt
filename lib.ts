@@ -8,10 +8,31 @@ import markdown from "highlight.js/lib/languages/markdown";
 import typescript from "highlight.js/lib/languages/typescript";
 import yaml from "highlight.js/lib/languages/yaml";
 
-export const valtownToken = Deno.env.get("VALTOWN_TOKEN") || "";
+export const valtownToken = Deno.env.get("VALTOWN_TOKEN") ||
+  Deno.env.get("valtown") || "";
 if (!valtownToken) {
   console.error("VALTOWN_TOKEN is required");
   Deno.exit(1);
+}
+
+export async function fetchEnv() {
+  const resp = await fetchValTown("/v1/eval", {
+    method: "POST",
+    body: JSON.stringify({
+      code: "JSON.stringify(Deno.env.toObject())",
+    }),
+  });
+
+  if (!resp.ok) {
+    throw new Error(await resp.text());
+  }
+
+  const env = await resp.json();
+  delete env["VALTOWN_API_URL"];
+  delete env["valtown"];
+  delete env["FORCE_COLOR"];
+
+  return env;
 }
 
 export async function fetchValTown(

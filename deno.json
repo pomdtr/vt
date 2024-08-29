@@ -1,6 +1,6 @@
 {
   "name": "@pomdtr/vt",
-  "version": "1.10.7",
+  "version": "1.10.8",
   "exports": "./vt.ts",
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.5",
