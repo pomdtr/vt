@@ -8,21 +8,27 @@ import open from "open";
 import { toText } from "@std/streams";
 import { Table } from "@cliffy/table";
 import { valCmd } from "./val.ts";
-import { fetchValTown, printJson, printYaml, valtownToken } from "./lib.ts";
+import {
+  fetchValTown,
+  parseVal,
+  printJson,
+  printYaml,
+  valtownToken,
+} from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
-const rootCmd = new Command().name("vt").version(manifest.version).action(
+const vt = new Command().name("vt").version(manifest.version).action(
   () => {
-    rootCmd.showHelp();
+    vt.showHelp();
   },
 );
 
-rootCmd.command("val", valCmd);
-rootCmd.command("blob", blobCmd);
-rootCmd.command("table", tableCmd);
+vt.command("val", valCmd);
+vt.command("blob", blobCmd);
+vt.command("table", tableCmd);
 
-rootCmd
+vt
   .command("eval")
   .description("Eval an expression.")
   .arguments("[expression:string]")
@@ -56,7 +62,7 @@ rootCmd
     console.log(resp);
   });
 
-rootCmd.command("env").option("--json", "Output as JSON.")
+vt.command("env").option("--json", "Output as JSON.")
   .description("Print environment variables.").action(
     async (options) => {
       const resp = await fetchValTown("/v1/eval", {
@@ -86,7 +92,7 @@ rootCmd.command("env").option("--json", "Output as JSON.")
     },
   );
 
-rootCmd
+vt
   .command("repl")
   .description("Start a REPL.")
   .action((_) => {
@@ -113,7 +119,7 @@ rootCmd
     }
   });
 
-rootCmd
+vt
   .command("api")
   .description("Make an API request.")
   .example("Get your user info", "vt api /v1/me")
@@ -153,7 +159,7 @@ rootCmd
     console.log(await resp.text());
   });
 
-rootCmd
+vt
   .command("openapi")
   .description("View openapi specs")
   .hidden()
@@ -178,9 +184,9 @@ rootCmd
     printYaml(await resp.text());
   });
 
-rootCmd.command("completions", new CompletionsCommand());
+vt.command("completions", new CompletionsCommand());
 
-rootCmd
+vt
   .command("email")
   .description("Send an email.")
   .option("-t, --to <to:string>", "To")
@@ -205,7 +211,32 @@ rootCmd
     console.log("Email sent.");
   });
 
-rootCmd
+vt.command("run").description("Run a val")
+  .useRawArgs().action(async (_, val, ...args) => {
+    if (!val) {
+      console.error("Val is required.");
+      Deno.exit(1);
+    }
+    const { author, name } = await parseVal(val);
+    const command = new Deno.Command("deno", {
+      args: [
+        "run",
+        "--reload",
+        "--quiet",
+        "--allow-all",
+        `https://esm.town/v/${author}/${name}`,
+        ...args,
+      ],
+      stdin: "inherit",
+      stdout: "inherit",
+      stderr: "inherit",
+    });
+
+    const { code } = await command.output();
+    Deno.exit(code);
+  });
+
+vt
   .command("query")
   .description("Execute a query.")
   .arguments("<query:string>")
@@ -230,7 +261,7 @@ rootCmd
     table.render();
   });
 
-rootCmd.command(
+vt.command(
   "upgrade",
   new UpgradeCommand({
     args: ["--allow-all"],
@@ -240,4 +271,6 @@ rootCmd.command(
   }),
 );
 
-await rootCmd.parse();
+if (import.meta.main) {
+  await vt.parse();
+}
