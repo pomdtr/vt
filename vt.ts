@@ -14,7 +14,6 @@ import {
   parseVal,
   printJson,
   printYaml,
-  valtownToken,
 } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
@@ -60,7 +59,7 @@ vt
       Deno.exit(1);
     }
 
-    console.log(resp);
+    console.log(await resp.text());
   });
 
 vt.command("env").option("--json", "Output as JSON.")
@@ -82,33 +81,6 @@ vt.command("env").option("--json", "Output as JSON.")
       }
     },
   );
-
-vt
-  .command("repl")
-  .description("Start a REPL.")
-  .action((_) => {
-    const args = [
-      "repl",
-      "--allow-net",
-      "--allow-env",
-      "--reload=https://esm.town/v/",
-    ];
-
-    const { success } = new Deno.Command("deno", {
-      args,
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-      env: {
-        valtown: valtownToken,
-        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
-      },
-    }).outputSync();
-
-    if (!success) {
-      Deno.exit(1);
-    }
-  });
 
 vt
   .command("api")
@@ -200,35 +172,6 @@ vt
     }
 
     console.log("Email sent.");
-  });
-
-vt.command("run").description("Run a val")
-  .useRawArgs().action(async (_, val, ...args) => {
-    if (!val) {
-      console.error("Val is required.");
-      Deno.exit(1);
-    }
-
-    const { author, name } = await parseVal(val);
-    const command = new Deno.Command("deno", {
-      args: [
-        "run",
-        "--reload",
-        "--quiet",
-        "--allow-all",
-        `https://esm.town/v/${author}/${name}`,
-        ...args,
-      ],
-      env: {
-        valtown: valtownToken,
-      },
-      stdin: "inherit",
-      stdout: "inherit",
-      stderr: "inherit",
-    });
-
-    const { code } = await command.output();
-    Deno.exit(code);
   });
 
 vt

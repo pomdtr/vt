@@ -2,14 +2,8 @@ import { Command } from "@cliffy/command";
 import open from "open";
 import { Table } from "@cliffy/table";
 import { toText } from "@std/streams";
-import { loadUser, printMarkdown, printTypescript } from "./lib.ts";
-import {
-  editText,
-  fetchValTown,
-  parseVal,
-  printJson,
-  valtownToken,
-} from "./lib.ts";
+import { fetchEnv, loadUser, printMarkdown, printTypescript } from "./lib.ts";
+import { editText, fetchValTown, parseVal, printJson } from "./lib.ts";
 
 type Val = {
   name: string;
@@ -359,29 +353,32 @@ valCmd
   .description("Run a val.")
   .stopEarly()
   .arguments("<val:string> [args...]")
+  .useRawArgs()
   .action(async (_, val, ...args) => {
-    const { author, name } = await parseVal(val);
+    if (!val) {
+      console.error("Val is required.");
+      Deno.exit(1);
+    }
 
-    const { success } = new Deno.Command("deno", {
+    const { author, name } = await parseVal(val);
+    const env = await fetchEnv();
+    const command = new Deno.Command("deno", {
       args: [
         "run",
-        "--allow-all",
+        "--reload",
         "--quiet",
-        "--reload=https://esm.town/v/",
+        "--allow-all",
         `https://esm.town/v/${author}/${name}`,
         ...args,
       ],
+      env,
       stdin: "inherit",
       stdout: "inherit",
       stderr: "inherit",
-      env: {
-        DENO_AUTH_TOKENS: `${valtownToken}@esm.town`,
-      },
-    }).outputSync();
+    });
 
-    if (!success) {
-      Deno.exit(1);
-    }
+    const { code } = await command.output();
+    Deno.exit(code);
   });
 
 valCmd

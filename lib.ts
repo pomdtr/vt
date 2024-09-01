@@ -8,11 +8,14 @@ import markdown from "highlight.js/lib/languages/markdown";
 import typescript from "highlight.js/lib/languages/typescript";
 import yaml from "highlight.js/lib/languages/yaml";
 
-export const valtownToken = Deno.env.get("VALTOWN_TOKEN") ||
-  Deno.env.get("valtown") || "";
-if (!valtownToken) {
-  console.error("VALTOWN_TOKEN is required");
-  Deno.exit(1);
+export function getValTownApiKey() {
+  const token = Deno.env.get("VAL_TOWN_API_KEY") ||
+    Deno.env.get("VALTOWN_TOKEN");
+  if (!token) {
+    throw new Error("VAL_TOWN_API_KEY is required");
+  }
+
+  return token;
 }
 
 export async function fetchEnv() {
@@ -29,7 +32,6 @@ export async function fetchEnv() {
 
   const env = await resp.json();
   delete env["VALTOWN_API_URL"];
-  delete env["valtown"];
   delete env["FORCE_COLOR"];
 
   return env;
@@ -44,7 +46,7 @@ export async function fetchValTown(
   const apiURL = Deno.env.get("VALTOWN_API_URL") || "https://api.val.town";
   const headers = {
     ...options?.headers,
-    Authorization: `Bearer ${valtownToken}`,
+    Authorization: `Bearer ${getValTownApiKey()}`,
   };
   if (options?.paginate) {
     const data = [];
@@ -96,7 +98,7 @@ export async function loadUser() {
     "smallweb",
     "vt",
     "user",
-    await hash(valtownToken),
+    await hash(getValTownApiKey()),
   );
   if (fs.existsSync(cachePath)) {
     const text = await Deno.readTextFile(cachePath);
