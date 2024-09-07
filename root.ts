@@ -12,7 +12,7 @@ import { fetchEnv, fetchValTown, printJson, printYaml } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
-const cmd = new Command().name("vt").version(manifest.version).action(
+const cmd: Command = new Command().name("vt").version(manifest.version).action(
     () => {
         cmd.showHelp();
     },

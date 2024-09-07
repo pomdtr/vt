@@ -6,6 +6,7 @@
     "include": [
       "*.ts",
       "assets/*",
+      "LICENSE",
       "README.md"
     ]
   },
