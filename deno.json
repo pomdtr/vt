@@ -1,7 +1,19 @@
 {
   "name": "@pomdtr/vt",
-  "version": "1.10.9",
+  "version": "1.10.10",
   "exports": "./vt.ts",
+  "publish": {
+    "include": [
+      "*.ts",
+      "assets/*",
+      "README.md"
+    ]
+  },
+  "fmt": {
+    "include": [
+      "*.ts"
+    ]
+  },
   "imports": {
     "@cliffy/command": "jsr:@cliffy/command@1.0.0-rc.5",
     "@cliffy/table": "jsr:@cliffy/table@1.0.0-rc.5",
@@ -14,10 +26,5 @@
     "open": "npm:open@10.1.0",
     "shlex": "npm:shlex@2.1.2",
     "xdg-portable": "npm:xdg-portable"
-  },
-  "fmt": {
-    "include": [
-      "**/*.ts"
-    ]
   }
 }

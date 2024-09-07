@@ -10,7 +10,7 @@ import yaml from "highlight.js/lib/languages/yaml";
 
 export function getValTownApiKey() {
   const token = Deno.env.get("VAL_TOWN_API_KEY") ||
-    Deno.env.get("VALTOWN_TOKEN");
+    Deno.env.get("VALTOWN_TOKEN") || Deno.env.get("valtown");
   if (!token) {
     throw new Error("VAL_TOWN_API_KEY is required");
   }
