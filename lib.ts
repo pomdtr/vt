@@ -1,6 +1,4 @@
 import { encodeHex } from "@std/encoding/hex";
-import * as path from "@std/path";
-import * as fs from "@std/fs";
 import shlex from "shlex";
 import { createEmphasize } from "emphasize";
 import json from "highlight.js/lib/languages/json";
@@ -92,17 +90,10 @@ async function hash(msg: string) {
 }
 
 export async function loadUser() {
-  const cachePath = path.join(
-    Deno.env.get("XDG_CACHE_HOME") ||
-      path.join(Deno.env.get("HOME")!, ".cache"),
-    "smallweb",
-    "vt",
-    "user",
-    await hash(getValTownApiKey()),
-  );
-  if (fs.existsSync(cachePath)) {
-    const text = await Deno.readTextFile(cachePath);
-    return JSON.parse(text);
+  const userHash = await hash(getValTownApiKey());
+  const item = localStorage.getItem(userHash);
+  if (item) {
+    return JSON.parse(item);
   }
 
   const resp = await fetchValTown("/v1/me");
@@ -111,8 +102,7 @@ export async function loadUser() {
   }
 
   const user = await resp.json();
-  await Deno.mkdir(path.dirname(cachePath), { recursive: true });
-  await Deno.writeTextFile(cachePath, JSON.stringify(user));
+  await localStorage.setItem(userHash, JSON.stringify(user));
   return user;
 }
 

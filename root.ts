@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run -A
 import { Command } from "@cliffy/command";
 import { CompletionsCommand } from "@cliffy/command/completions";
 import { UpgradeCommand } from "@cliffy/command/upgrade";
