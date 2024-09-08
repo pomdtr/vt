@@ -153,7 +153,7 @@ export async function editText(text: string, extension: string) {
 }
 
 export function printYaml(value: string) {
-  if (Deno.stdout.isTerminal()) {
+  if (Deno.stdout.isTerminal() || Deno.env.get("FORCE_COLOR")) {
     const emphasize = createEmphasize();
     emphasize.register({ yaml });
     console.log(emphasize.highlight("yaml", value).value);
@@ -163,7 +163,7 @@ export function printYaml(value: string) {
 }
 
 export function printTypescript(value: string) {
-  if (Deno.stdout.isTerminal()) {
+  if (Deno.stdout.isTerminal() || Deno.env.get("FORCE_COLOR")) {
     const emphasize = createEmphasize();
     emphasize.register({ typescript });
     console.log(emphasize.highlight("typescript", value).value);
@@ -173,7 +173,7 @@ export function printTypescript(value: string) {
 }
 
 export function printMarkdown(value: string) {
-  if (Deno.stdout.isTerminal()) {
+  if (Deno.stdout.isTerminal() || Deno.env.get("FORCE_COLOR")) {
     const emphasize = createEmphasize();
     emphasize.register({ markdown });
     console.log(emphasize.highlight("markdown", value).value);
@@ -183,7 +183,7 @@ export function printMarkdown(value: string) {
 }
 
 export function printJson(obj: unknown) {
-  if (Deno.stdout.isTerminal()) {
+  if (Deno.stdout.isTerminal() || Deno.env.get("FORCE_COLOR")) {
     const emphasize = createEmphasize();
     emphasize.register({
       json,
