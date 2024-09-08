@@ -243,12 +243,7 @@ valCmd
       return;
     }
 
-    if (Deno.stdout.isTerminal()) {
-      // @ts-ignore: strange fets issue
-      printTypescript(code);
-    } else {
-      console.log(code);
-    }
+    printTypescript(code);
   });
 
 valCmd
