@@ -2,7 +2,7 @@
 
 ## 1.11.0 - 2024-05-02
 
-- remove `vt eval` and `vt env` command (as `/v1/eval` endpoint is deprecated in the val town api)
+- remove `vt eval`, `vt env`, `vt val run` and `vt val install` command (as `/v1/eval` endpoint is deprecated in the val town api)
 
 ## 1.7.0 - 2024-05-02
 

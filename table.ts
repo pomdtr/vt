@@ -108,7 +108,7 @@ async function csvDump(csvPath: string, tableName: string) {
       `.mode csv\n.import ${csvPath} ${tableName}\n.output stdout\n.dump ${tableName}\n`,
     );
   } catch (e) {
-    throw new Error(e);
+    throw e
   } finally {
     await Deno.remove(tempfile);
   }
