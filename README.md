@@ -10,7 +10,7 @@ deno install -Agf jsr:@pomdtr/vt
 
 Run `vt completions --help` for instructions on how to enable shell completions.
 
-## Upgrading
+## Updating
 
 ```bash
 vt upgrade
@@ -24,10 +24,25 @@ Set the `VALTOWN_TOKEN` environment variable. You can generate a new one from [h
 
 ## Features
 
-- Manage and Edit your vals locally
-- List/Upload/Download/Delete Blobs
-- Execute SQLite queries, import csv files as tables
+```console
+$ vt --help
 
-## Usage
+Usage:   vt
+Version: 1.11.0
 
-Run `vt --help` to get a list of all available commands.
+Options:
+
+  -h, --help     - Show this help.
+  -V, --version  - Show the version number for this program.
+
+Commands:
+
+  val                         - Manage Vals.
+  blob                        - Manage Blobs
+  table                       - Manage sqlite tables.
+  api          <url-or-path>  - Make an API request.
+  completions                 - Generate shell completions.
+  email                       - Send an email.
+  query        <query>        - Execute a query.
+  upgrade                     - Upgrade vt executable to latest or given version.
+```
