@@ -16,25 +16,6 @@ export function getValTownApiKey() {
   return token;
 }
 
-export async function fetchEnv() {
-  const resp = await fetchValTown("/v1/eval", {
-    method: "POST",
-    body: JSON.stringify({
-      code: "JSON.stringify(Deno.env.toObject())",
-    }),
-  });
-
-  if (!resp.ok) {
-    throw new Error(await resp.text());
-  }
-
-  const env = await resp.json();
-  delete env["VALTOWN_API_URL"];
-  delete env["FORCE_COLOR"];
-
-  return env;
-}
-
 export async function fetchValTown(
   path: string,
   options?: RequestInit & {

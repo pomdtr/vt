@@ -7,7 +7,7 @@ import open from "open";
 import { toText } from "@std/streams";
 import { Table } from "@cliffy/table";
 import { valCmd } from "./val.ts";
-import { fetchEnv, fetchValTown, printJson, printYaml } from "./lib.ts";
+import { fetchValTown, printJson, printYaml } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
@@ -20,60 +20,6 @@ const cmd: Command = new Command().name("vt").version(manifest.version).action(
 cmd.command("val", valCmd);
 cmd.command("blob", blobCmd);
 cmd.command("table", tableCmd);
-
-cmd
-    .command("eval")
-    .description("Eval an expression.")
-    .arguments("[expression:string]")
-    .option(
-        "--args <args:string>",
-        "Arguments to pass to the expression as JSON array.",
-    )
-    .action(async (options, expression) => {
-        if (!expression) {
-            if (Deno.stdin.isTerminal()) {
-                console.error("Expression is required.");
-                Deno.exit(1);
-            }
-
-            expression = await toText(Deno.stdin.readable);
-        }
-
-        const resp = await fetchValTown("/v1/eval", {
-            method: "POST",
-            body: JSON.stringify({
-                code: expression,
-                args: options.args ? JSON.parse(options.args) : undefined,
-            }),
-        });
-
-        if (!resp.ok) {
-            console.error(await resp.text());
-            Deno.exit(1);
-        }
-
-        console.log(await resp.text());
-    });
-
-cmd.command("env").option("--json", "Output as JSON.")
-    .description("Print environment variables.").action(
-        async (options) => {
-            try {
-                const env = await fetchEnv();
-                if (options.json) {
-                    printJson(env);
-                    return;
-                }
-
-                for (const [key, value] of Object.entries(env)) {
-                    console.log(`${key}=${value}`);
-                }
-            } catch (error) {
-                console.error(error.message);
-                Deno.exit(1);
-            }
-        },
-    );
 
 cmd
     .command("api")
