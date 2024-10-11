@@ -2,7 +2,7 @@
 
 ## Installation
 
-You will need to install [deno](https://deno.land/) first.
+You will need to install [deno](https://deno.com/) first.
 
 ```bash
 deno install -Agf jsr:@pomdtr/vt
