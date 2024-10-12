@@ -86,14 +86,14 @@ valCmd
   .action(async (_, oldName, newName) => {
     const { author, name } = await parseVal(oldName);
 
-    const getResp = await fetch(`/v1/alias/${author}/${name}`);
+    const getResp = await fetchValTown(`/v1/alias/${author}/${name}`);
     if (!getResp.ok) {
       console.error(await getResp.text());
       Deno.exit(1);
     }
     const val = await getResp.json();
 
-    const renameResp = await fetch(`/v1/vals/${val.id}`, {
+    const renameResp = await fetchValTown(`/v1/vals/${val.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
