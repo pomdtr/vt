@@ -8,8 +8,10 @@ export const tableCmd = new Command()
   .action(() => {
     tableCmd.showHelp();
   });
+
 tableCmd
   .command("list")
+  .alias("ls")
   .description("List Tables")
   .action(async () => {
     const resp = await fetchValTown("/v1/sqlite/execute", {

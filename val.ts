@@ -23,6 +23,7 @@ export const valCmd = new Command()
 
 valCmd
   .command("create")
+  .alias("new")
   .description("Create a new val")
   .option("--privacy <privacy:string>", "privacy of the val")
   .option("--readme <readme:string>", "readme value")
@@ -61,6 +62,7 @@ valCmd
 
 valCmd
   .command("delete")
+  .alias("rm")
   .description("Delete a val")
   .arguments("<val:string>")
   .action(async (_, ...args) => {
@@ -284,6 +286,7 @@ valCmd
 
 valCmd
   .command("list")
+  .alias("ls")
   .description("List user vals.")
   .option("--user <user:string>", "User")
   .option("--limit <limit:number>", "Limit", {
