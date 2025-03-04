@@ -11,11 +11,15 @@ import { fetchValTown, printJson, printYaml } from "./lib.ts";
 import { blobCmd } from "./blob.ts";
 import { tableCmd } from "./table.ts";
 
-const cmd: Command = new Command().name("vt").version(manifest.version).action(
-    () => {
-        cmd.showHelp();
-    },
-);
+const cmd: Command = new Command()
+    .name("vt")
+    .help({ colors: Deno.stdout.isTerminal() })
+    .version(manifest.version)
+    .action(
+        () => {
+            cmd.showHelp();
+        },
+    );
 
 cmd.command("val", valCmd);
 cmd.command("blob", blobCmd);

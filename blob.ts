@@ -5,6 +5,7 @@ import { editText, fetchValTown } from "./lib.ts";
 
 export const blobCmd = new Command()
   .name("val")
+  .help({ colors: Deno.stdout.isTerminal() })
   .description("Manage Blobs")
   .action(() => {
     blobCmd.showHelp();

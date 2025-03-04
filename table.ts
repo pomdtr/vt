@@ -4,6 +4,7 @@ import { fetchValTown, printJson } from "./lib.ts";
 
 export const tableCmd = new Command()
   .name("table")
+  .help({ colors: Deno.stdout.isTerminal() })
   .description("Manage sqlite tables.")
   .action(() => {
     tableCmd.showHelp();

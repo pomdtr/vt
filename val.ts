@@ -16,6 +16,7 @@ type Val = {
 
 export const valCmd = new Command()
   .name("val")
+  .help({ colors: Deno.stdout.isTerminal() })
   .description("Manage Vals.")
   .action(() => {
     valCmd.showHelp();
